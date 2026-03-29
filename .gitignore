@@ -1,0 +1,11 @@
+.tasks
+.venv
+__pycache__
+*.pyc
+.DS_Store
+.env
+learn-claude-code
+claw0
+deer-flow
+everything-claude-code
+deepagents

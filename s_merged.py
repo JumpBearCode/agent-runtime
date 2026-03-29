@@ -7,10 +7,11 @@ subagents, skill loading, context compression, and background tasks.
 
 TodoManager (s03) is dropped; its nag reminder is applied to TaskManager (s07).
 """
-
+import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import threading
 import time
@@ -25,15 +26,89 @@ load_dotenv(override=True)
 if os.getenv("ANTHROPIC_BASE_URL"):
     os.environ.pop("ANTHROPIC_AUTH_TOKEN", None)
 
-WORKDIR = Path.cwd()
 client = Anthropic(base_url=os.getenv("ANTHROPIC_BASE_URL"))
 MODEL = os.environ["MODEL_ID"]
 
-TASKS_DIR = WORKDIR / ".tasks"
-SKILLS_DIR = WORKDIR / "skills"
-TRANSCRIPT_DIR = WORKDIR / ".transcripts"
+# -- Workspace & sandbox config (set by main() via --workspace) --
+WORKDIR = Path.cwd()
+SANDBOX_ENABLED = False
+CONTAINER_NAME = "agent-sandbox"
+SANDBOX_IMAGE = "agent-sandbox"
 COMPACT_THRESHOLD = 50000
 KEEP_RECENT = 3
+
+
+def _setup_workspace(workspace_arg: str | None) -> Path:
+    """Resolve workspace path and optionally start Docker sandbox."""
+    global WORKDIR, SANDBOX_ENABLED
+
+    if workspace_arg is None:
+        # No sandbox — warn and use cwd
+        WORKDIR = Path.cwd()
+        SANDBOX_ENABLED = False
+        return WORKDIR
+
+    # Resolve path: "." means cwd, otherwise resolve relative to cwd
+    ws = Path(workspace_arg).resolve() if workspace_arg != "." else Path.cwd()
+    if not ws.exists():
+        ws.mkdir(parents=True)
+        print(f"  Created workspace: {ws}")
+
+    WORKDIR = ws
+
+    # Check if Docker is available
+    if not shutil.which("docker"):
+        print("\033[33m  [warn] Docker not found, sandbox disabled.\033[0m")
+        SANDBOX_ENABLED = False
+        return WORKDIR
+
+    # Start or reuse sandbox container
+    SANDBOX_ENABLED = _ensure_container(ws)
+    return WORKDIR
+
+
+def _ensure_container(workspace: Path) -> bool:
+    """Start sandbox container if not running. Returns True if sandbox is active."""
+    try:
+        r = subprocess.run(
+            ["docker", "inspect", "-f", "{{.State.Running}}", CONTAINER_NAME],
+            capture_output=True, text=True, timeout=5,
+        )
+        if r.stdout.strip() == "true":
+            print(f"  Sandbox: reusing container '{CONTAINER_NAME}'")
+            return True
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+
+    # Check if image exists
+    r = subprocess.run(
+        ["docker", "images", "-q", SANDBOX_IMAGE],
+        capture_output=True, text=True, timeout=5,
+    )
+    if not r.stdout.strip():
+        print(f"\033[33m  [warn] Docker image '{SANDBOX_IMAGE}' not found. Run: docker build -t {SANDBOX_IMAGE} .\033[0m")
+        print("\033[33m  Sandbox disabled.\033[0m")
+        return False
+
+    # Remove stopped container with same name
+    subprocess.run(["docker", "rm", "-f", CONTAINER_NAME],
+                   capture_output=True, timeout=5)
+
+    # Start new container
+    r = subprocess.run([
+        "docker", "run", "-d",
+        "--name", CONTAINER_NAME,
+        "-v", f"{workspace}:/workspace",
+        SANDBOX_IMAGE,
+    ], capture_output=True, text=True, timeout=30)
+
+    if r.returncode == 0:
+        print(f"  Sandbox: started container '{CONTAINER_NAME}' -> /workspace")
+        return True
+
+    print(f"\033[33m  [warn] Failed to start container: {r.stderr.strip()}\033[0m")
+    print("\033[33m  Sandbox disabled.\033[0m")
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -116,7 +191,7 @@ class TaskManager:
         return "\n".join(lines)
 
 
-TASKS = TaskManager(TASKS_DIR)
+TASKS: TaskManager = None  # initialized in main()
 
 
 # ---------------------------------------------------------------------------
@@ -168,7 +243,7 @@ class SkillLoader:
         return f"<skill name=\"{name}\">\n{skill['body']}\n</skill>"
 
 
-SKILL_LOADER = SkillLoader(SKILLS_DIR)
+SKILL_LOADER: SkillLoader = None  # initialized in main()
 
 
 # ---------------------------------------------------------------------------
@@ -267,8 +342,9 @@ def micro_compact(messages: list) -> list:
 
 
 def auto_compact(messages: list) -> list:
-    TRANSCRIPT_DIR.mkdir(exist_ok=True)
-    transcript_path = TRANSCRIPT_DIR / f"transcript_{int(time.time())}.jsonl"
+    transcript_dir = WORKDIR / ".transcripts"
+    transcript_dir.mkdir(exist_ok=True)
+    transcript_path = transcript_dir / f"transcript_{int(time.time())}.jsonl"
     with open(transcript_path, "w") as f:
         for msg in messages:
             f.write(json.dumps(msg, default=str) + "\n")
@@ -329,8 +405,15 @@ def run_bash(command: str) -> str:
     if any(d in command for d in dangerous):
         return "Error: Dangerous command blocked"
     try:
-        r = subprocess.run(command, shell=True, cwd=WORKDIR,
-                           capture_output=True, text=True, timeout=120)
+        if SANDBOX_ENABLED:
+            r = subprocess.run(
+                ["docker", "exec", "--workdir", "/workspace",
+                 CONTAINER_NAME, "bash", "-c", command],
+                capture_output=True, text=True, timeout=120,
+            )
+        else:
+            r = subprocess.run(command, shell=True, cwd=WORKDIR,
+                               capture_output=True, text=True, timeout=120)
         out = (r.stdout + r.stderr).strip()
         return out[:50000] if out else "(no output)"
     except subprocess.TimeoutExpired:
@@ -422,16 +505,23 @@ TOOLS = CHILD_TOOLS + [
 
 
 # ---------------------------------------------------------------------------
-# System prompt (with skill descriptions)
+# System prompt (built at runtime after WORKDIR and SKILL_LOADER are set)
 # ---------------------------------------------------------------------------
-SYSTEM = f"""You are a coding agent at {WORKDIR}.
+SYSTEM: str = ""
+
+
+def _build_system_prompt() -> str:
+    skills = SKILL_LOADER.get_descriptions() if SKILL_LOADER else "(no skills available)"
+    sandbox_note = " (sandboxed via Docker)" if SANDBOX_ENABLED else ""
+    return f"""You are a coding agent at {WORKDIR}.{sandbox_note}
 Use task tools to plan and track multi-step work. Mark in_progress before starting, completed when done.
 Use load_skill to access specialized knowledge before tackling unfamiliar topics.
 Use subagent for isolated exploration. Use background_run for long-running commands.
+All file operations (read_file, write_file, edit_file) are restricted to the workspace directory.
 Prefer tools over prose.
 
 Skills available:
-{SKILL_LOADER.get_descriptions()}"""
+{skills}"""
 
 
 # ---------------------------------------------------------------------------
@@ -561,10 +651,42 @@ def read_input() -> str:
     return "\n".join(lines)
 
 
-if __name__ == "__main__":
-    history = []
+def main():
+    global TASKS, SKILL_LOADER, SYSTEM
+
+    parser = argparse.ArgumentParser(description="Agent runtime")
+    parser.add_argument(
+        "--workspace", "-w", default=None,
+        help="Workspace directory. '.' for cwd. Enables Docker sandbox if available. "
+             "If omitted, runs without sandbox.",
+    )
+    args = parser.parse_args()
+
+    # Initialize workspace + sandbox
+    _setup_workspace(args.workspace)
+
+    # Initialize globals that depend on WORKDIR
+    TASKS = TaskManager(WORKDIR / ".tasks")
+    SKILL_LOADER = SkillLoader(WORKDIR / "skills")
+    SYSTEM = _build_system_prompt()
+
+    # Print startup info
+    print("=" * 60)
+    print(f"  Workspace: {WORKDIR}")
+    if SANDBOX_ENABLED:
+        print(f"  Sandbox:   Docker ({CONTAINER_NAME})")
+    else:
+        if args.workspace is None:
+            print("  \033[33mSandbox:   OFF — bash can escape safe_path.\033[0m")
+            print("  \033[33m           Use --workspace <dir> to enable Docker sandbox.\033[0m")
+        else:
+            print("  \033[33mSandbox:   OFF (Docker not available)\033[0m")
+    print(f"  Model:     {MODEL}")
+    print("=" * 60)
     print("Multi-line input: end first line with \\ then blank line to submit.")
     print("Commands: /compact /tasks  |  quit/exit to leave.\n")
+
+    history = []
     while True:
         try:
             query = read_input()
@@ -584,10 +706,9 @@ if __name__ == "__main__":
         try:
             agent_loop(history)
         except KeyboardInterrupt:
-            # Ctrl+C during tool execution: ensure messages stay valid
             print("\n[interrupted]")
             if history and history[-1]["role"] == "assistant":
-                history.pop()  # remove orphaned assistant message
+                history.pop()
             continue
         except Exception as e:
             print(f"\n[error: {e}]")
@@ -600,3 +721,7 @@ if __name__ == "__main__":
                 if hasattr(block, "text"):
                     print(block.text)
         print()
+
+
+if __name__ == "__main__":
+    main()
