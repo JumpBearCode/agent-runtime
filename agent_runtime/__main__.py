@@ -39,10 +39,22 @@ def main():
         help="Workspace directory. '.' for cwd. Enables Docker sandbox if available. "
              "If omitted, runs without sandbox.",
     )
+    parser.add_argument(
+        "--thinking", "-t", action="store_true", default=False,
+        help="Enable extended thinking (forces temperature=1).",
+    )
+    parser.add_argument(
+        "--thinking-budget", type=int, default=10000,
+        help="Max tokens for thinking per turn (default: 10000).",
+    )
     args = parser.parse_args()
 
     # Initialize workspace + sandbox
     setup_workspace(args.workspace)
+
+    # Thinking config
+    config.THINKING_ENABLED = args.thinking
+    config.THINKING_BUDGET = args.thinking_budget
 
     # Initialize managers
     tasks = TaskManager(config.WORKDIR / ".tasks")
@@ -68,6 +80,8 @@ def main():
         else:
             print("  \033[33mSandbox:   OFF (Docker not available)\033[0m")
     print(f"  Model:     {config.MODEL}")
+    if config.THINKING_ENABLED:
+        print(f"  Thinking:  ON (budget: {config.THINKING_BUDGET} tokens)")
     print("=" * 60)
     print("Multi-line input: end first line with \\ then blank line to submit.")
     print("Commands: /compact /tasks  |  quit/exit to leave.\n")

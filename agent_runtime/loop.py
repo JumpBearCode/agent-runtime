@@ -1,4 +1,7 @@
-"""Agent loop — the core while loop that calls tools until the model stops."""
+"""Agent loop — streaming + optional thinking."""
+
+import json
+import sys
 
 from . import config
 from .tools import TOOLS, TOOL_HANDLERS
@@ -42,6 +45,85 @@ Skills available:
 {skills}"""
 
 
+def _stream_response(system: str, messages: list):
+    """Stream API call, print text/thinking live, return (content_blocks, stop_reason)."""
+    kwargs = dict(
+        model=config.MODEL, system=system, messages=messages,
+        tools=TOOLS, max_tokens=8000,
+    )
+    if config.THINKING_ENABLED:
+        kwargs["thinking"] = {"type": "enabled", "budget_tokens": config.THINKING_BUDGET}
+        kwargs["temperature"] = 1
+
+    content_blocks = []
+    stop_reason = None
+
+    # Track current block being streamed
+    current_block_type = None
+    current_text = ""
+    current_thinking = ""
+    current_tool_name = ""
+    current_tool_input_json = ""
+    current_tool_id = ""
+    in_text = False
+    in_thinking = False
+
+    with config.client.messages.stream(**kwargs) as stream:
+        for event in stream:
+            # --- Block lifecycle ---
+            if event.type == "content_block_start":
+                block = event.content_block
+                current_block_type = block.type
+                if block.type == "text":
+                    in_text = True
+                    current_text = ""
+                elif block.type == "thinking":
+                    in_thinking = True
+                    current_thinking = ""
+                    sys.stdout.write("\033[2m")  # dim for thinking
+                elif block.type == "tool_use":
+                    current_tool_name = block.name
+                    current_tool_id = block.id
+                    current_tool_input_json = ""
+
+            elif event.type == "content_block_delta":
+                delta = event.delta
+                if delta.type == "text_delta":
+                    sys.stdout.write(delta.text)
+                    sys.stdout.flush()
+                    current_text += delta.text
+                elif delta.type == "thinking_delta":
+                    sys.stdout.write(delta.thinking)
+                    sys.stdout.flush()
+                    current_thinking += delta.thinking
+                elif delta.type == "input_json_delta":
+                    current_tool_input_json += delta.partial_json
+
+            elif event.type == "content_block_stop":
+                if current_block_type == "text" and current_text:
+                    # Use the text block object from the final message
+                    in_text = False
+                    sys.stdout.write("\n")
+                elif current_block_type == "thinking":
+                    in_thinking = False
+                    sys.stdout.write("\033[0m\n")  # reset dim
+                elif current_block_type == "tool_use":
+                    # Parse accumulated JSON
+                    try:
+                        tool_input = json.loads(current_tool_input_json) if current_tool_input_json else {}
+                    except json.JSONDecodeError:
+                        tool_input = {}
+                current_block_type = None
+
+            elif event.type == "message_delta":
+                stop_reason = event.delta.stop_reason
+
+        # Get the final message with properly constructed content blocks
+        content_blocks = stream.get_final_message().content
+
+    return content_blocks, stop_reason
+
+
 def agent_loop(messages: list, system: str, bg: BackgroundManager):
     rounds_since_task = 0
 
@@ -63,20 +145,21 @@ def agent_loop(messages: list, system: str, bg: BackgroundManager):
             else:
                 messages.append({"role": "user", "content": bg_block})
 
-        response = config.client.messages.create(
-            model=config.MODEL, system=system, messages=messages,
-            tools=TOOLS, max_tokens=8000,
-        )
-        messages.append({"role": "assistant", "content": response.content})
+        # Stream the response (text/thinking printed live)
+        content_blocks, stop_reason = _stream_response(system, messages)
 
-        if response.stop_reason != "tool_use":
+        # Append full assistant message (including thinking blocks for context)
+        messages.append({"role": "assistant", "content": content_blocks})
+
+        if stop_reason != "tool_use":
             return
 
+        # Execute tools
         results = []
         used_task_tool = False
         manual_compact = False
 
-        for block in response.content:
+        for block in content_blocks:
             if block.type == "tool_use":
                 if block.name == "subagent":
                     desc = block.input.get("description", "subtask")

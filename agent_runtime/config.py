@@ -23,3 +23,7 @@ SANDBOX_IMAGE = "agent-sandbox"
 # Compression settings
 COMPACT_THRESHOLD = 50000
 KEEP_RECENT = 3
+
+# Thinking — set via --thinking flag
+THINKING_ENABLED = False
+THINKING_BUDGET = 10000  # max tokens for thinking per turn

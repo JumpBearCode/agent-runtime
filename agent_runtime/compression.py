@@ -11,6 +11,19 @@ def estimate_tokens(messages: list) -> int:
 
 
 def micro_compact(messages: list) -> list:
+    # --- Clear old thinking blocks (keep only the most recent one) ---
+    if config.THINKING_ENABLED:
+        thinking_msgs = []
+        for msg_idx, msg in enumerate(messages):
+            if msg["role"] == "assistant" and isinstance(msg.get("content"), list):
+                for block in msg["content"]:
+                    if hasattr(block, "type") and block.type == "thinking":
+                        thinking_msgs.append((msg_idx, block))
+        # Replace all but the last thinking block with a short placeholder
+        for msg_idx, block in thinking_msgs[:-1]:
+            block.thinking = "[thinking compacted]"
+
+    # --- Clear old tool results ---
     tool_results = []
     for msg_idx, msg in enumerate(messages):
         if msg["role"] == "user" and isinstance(msg.get("content"), list):
