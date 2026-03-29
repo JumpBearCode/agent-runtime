@@ -57,7 +57,7 @@ class TaskManager:
 
     def _save(self, task: dict):
         path = self.dir / f"task_{task['id']}.json"
-        path.write_text(json.dumps(task, indent=2))
+        path.write_text(json.dumps(task, indent=2, ensure_ascii=False))
 
     def create(self, subject: str, description: str = "") -> str:
         task = {
@@ -66,7 +66,7 @@ class TaskManager:
         }
         self._save(task)
         self._next_id += 1
-        return json.dumps(task, indent=2)
+        return json.dumps(task, indent=2, ensure_ascii=False)
 
     def get(self, task_id: int) -> str:
         return json.dumps(self._load(task_id), indent=2)
@@ -93,7 +93,7 @@ class TaskManager:
                 except ValueError:
                     pass
         self._save(task)
-        return json.dumps(task, indent=2)
+        return json.dumps(task, indent=2, ensure_ascii=False)
 
     def _clear_dependency(self, completed_id: int):
         for f in self.dir.glob("task_*.json"):
@@ -284,8 +284,7 @@ def auto_compact(messages: list) -> list:
     )
     summary = response.content[0].text
     return [
-        {"role": "user", "content": f"[Conversation compressed. Transcript: {transcript_path}]\n\n{summary}"},
-        {"role": "assistant", "content": "Understood. I have the context from the summary. Continuing."},
+        {"role": "user", "content": f"[Conversation compressed. Transcript: {transcript_path}]\n\n{summary}\n\nContinue working."},
     ]
 
 
@@ -441,6 +440,25 @@ Skills available:
 TASK_TOOL_NAMES = {"task_create", "task_update", "task_list", "task_get"}
 
 
+def _format_args(tool_name: str, args: dict) -> str:
+    """One-line summary of tool args for display."""
+    if tool_name == "bash":
+        return f"  $ {args.get('command', '')[:120]}"
+    if tool_name == "read_file":
+        return f"  {args.get('path', '')}"
+    if tool_name in ("write_file", "edit_file"):
+        return f"  {args.get('path', '')}"
+    if tool_name == "task_create":
+        return f"  \"{args.get('subject', '')}\""
+    if tool_name == "task_update":
+        return f"  #{args.get('task_id', '')} → {args.get('status', '')}"
+    if tool_name == "load_skill":
+        return f"  {args.get('name', '')}"
+    if tool_name == "background_run":
+        return f"  $ {args.get('command', '')[:120]}"
+    return ""
+
+
 def agent_loop(messages: list):
     rounds_since_task = 0
 
@@ -451,14 +469,17 @@ def agent_loop(messages: list):
             print("[auto_compact triggered]")
             messages[:] = auto_compact(messages)
 
-        # Drain background notifications
+        # Drain background notifications — merge into last user message to keep alternation
         notifs = BG.drain_notifications()
         if notifs and messages:
             notif_text = "\n".join(
                 f"[bg:{n['task_id']}] {n['status']}: {n['result']}" for n in notifs
             )
-            messages.append({"role": "user", "content": f"<background-results>\n{notif_text}\n</background-results>"})
-            messages.append({"role": "assistant", "content": "Noted background results."})
+            bg_block = f"\n<background-results>\n{notif_text}\n</background-results>"
+            if messages[-1]["role"] == "user" and isinstance(messages[-1]["content"], str):
+                messages[-1]["content"] += bg_block
+            else:
+                messages.append({"role": "user", "content": bg_block})
 
         response = client.messages.create(
             model=MODEL, system=SYSTEM, messages=messages,
@@ -477,8 +498,11 @@ def agent_loop(messages: list):
             if block.type == "tool_use":
                 if block.name == "subagent":
                     desc = block.input.get("description", "subtask")
-                    print(f"> subagent ({desc}): {block.input['prompt'][:80]}")
-                    output = run_subagent(block.input["prompt"])
+                    print(f"\033[33m> subagent\033[0m  ({desc}) {block.input['prompt'][:80]}")
+                    try:
+                        output = run_subagent(block.input["prompt"])
+                    except Exception as e:
+                        output = f"Error: subagent failed: {e}"
                 elif block.name == "compact":
                     manual_compact = True
                     output = "Compressing..."
@@ -488,7 +512,12 @@ def agent_loop(messages: list):
                         output = handler(**block.input) if handler else f"Unknown tool: {block.name}"
                     except Exception as e:
                         output = f"Error: {e}"
-                print(f"> {block.name}: {str(output)[:200]}")
+                # Display: tool name + key args summary, then result on next line
+                args_summary = _format_args(block.name, block.input)
+                print(f"\033[33m> {block.name}\033[0m{args_summary}")
+                result_preview = str(output).strip()[:300]
+                if result_preview:
+                    print(f"  {result_preview}")
                 results.append({"type": "tool_result", "tool_use_id": block.id, "content": str(output)})
 
                 if block.name in TASK_TOOL_NAMES:
@@ -497,7 +526,7 @@ def agent_loop(messages: list):
         # Nag reminder (from s03): nudge model to update tasks if it hasn't recently
         rounds_since_task = 0 if used_task_tool else rounds_since_task + 1
         if rounds_since_task >= 3:
-            results.insert(0, {"type": "text", "text": "<reminder>Update your tasks.</reminder>"})
+            results.append({"type": "text", "text": "<reminder>Update your tasks.</reminder>"})
 
         messages.append({"role": "user", "content": results})
 
@@ -508,13 +537,37 @@ def agent_loop(messages: list):
 
 
 # ---------------------------------------------------------------------------
-# REPL
+# REPL (supports multi-line input: end with a blank line or type \\ at the end)
 # ---------------------------------------------------------------------------
-if __name__ == "__main__":
-    history = []
+def read_input() -> str:
+    """Read user input. Multi-line: end with blank line, or single-line by default."""
+    first = input("\033[36magent >> \033[0m")
+    if not first.endswith("\\"):
+        return first
+    # Multi-line mode: first line ended with \, keep reading until blank line
+    lines = [first[:-1]]  # strip trailing backslash
     while True:
         try:
-            query = input("\033[36magent >> \033[0m")
+            line = input("\033[36m   ... \033[0m")
+        except (EOFError, KeyboardInterrupt):
+            break
+        if line == "":
+            break
+        if line.endswith("\\"):
+            lines.append(line[:-1])
+        else:
+            lines.append(line)
+            break
+    return "\n".join(lines)
+
+
+if __name__ == "__main__":
+    history = []
+    print("Multi-line input: end first line with \\ then blank line to submit.")
+    print("Commands: /compact /tasks  |  quit/exit to leave.\n")
+    while True:
+        try:
+            query = read_input()
         except (EOFError, KeyboardInterrupt):
             break
         if query.strip().lower() in ("q", "exit", ""):
@@ -528,7 +581,19 @@ if __name__ == "__main__":
             print()
             continue
         history.append({"role": "user", "content": query})
-        agent_loop(history)
+        try:
+            agent_loop(history)
+        except KeyboardInterrupt:
+            # Ctrl+C during tool execution: ensure messages stay valid
+            print("\n[interrupted]")
+            if history and history[-1]["role"] == "assistant":
+                history.pop()  # remove orphaned assistant message
+            continue
+        except Exception as e:
+            print(f"\n[error: {e}]")
+            if history and history[-1]["role"] == "assistant":
+                history.pop()
+            continue
         response_content = history[-1]["content"]
         if isinstance(response_content, list):
             for block in response_content:
