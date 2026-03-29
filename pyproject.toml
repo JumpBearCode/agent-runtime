@@ -8,7 +8,7 @@ dependencies = [
 ]
 
 [project.scripts]
-agent = "s_merged:main"
+agent = "agent_runtime.__main__:main"
 
 [tool.uv.workspace]
 members = [
