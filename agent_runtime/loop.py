@@ -4,7 +4,7 @@ import json
 import sys
 
 from . import config
-from .tools import TOOLS, TOOL_HANDLERS
+from .tools import TOOLS, dispatch_tool
 from .subagent import run_subagent
 from .compression import micro_compact, auto_compact, estimate_tokens
 from .background import BackgroundManager
@@ -172,9 +172,8 @@ def agent_loop(messages: list, system: str, bg: BackgroundManager):
                     manual_compact = True
                     output = "Compressing..."
                 else:
-                    handler = TOOL_HANDLERS.get(block.name)
                     try:
-                        output = handler(**block.input) if handler else f"Unknown tool: {block.name}"
+                        output = dispatch_tool(block.name, block.input)
                     except Exception as e:
                         output = f"Error: {e}"
                 args_summary = _format_args(block.name, block.input)

@@ -9,6 +9,7 @@ from . import config
 TASKS = None      # TaskManager instance
 SKILL_LOADER = None  # SkillLoader instance
 BG = None         # BackgroundManager instance
+MCP = None        # MCPManager instance
 
 
 def safe_path(p: str) -> Path:
@@ -98,7 +99,7 @@ CHILD_TOOLS = [
      "input_schema": {"type": "object", "properties": {"path": {"type": "string"}, "old_text": {"type": "string"}, "new_text": {"type": "string"}}, "required": ["path", "old_text", "new_text"]}},
 ]
 
-TOOLS = CHILD_TOOLS + [
+BUILTIN_TOOLS = CHILD_TOOLS + [
     {"name": "task_create", "description": "Create a new task.",
      "input_schema": {"type": "object", "properties": {"subject": {"type": "string"}, "description": {"type": "string"}}, "required": ["subject"]}},
     {"name": "task_update", "description": "Update a task's status or dependencies.",
@@ -118,3 +119,26 @@ TOOLS = CHILD_TOOLS + [
     {"name": "compact", "description": "Trigger manual conversation compression.",
      "input_schema": {"type": "object", "properties": {"focus": {"type": "string", "description": "What to preserve in the summary"}}}},
 ]
+
+# TOOLS is built at startup: built-in + MCP tools
+TOOLS = list(BUILTIN_TOOLS)
+
+
+def rebuild_tools():
+    """Rebuild TOOLS list after MCP servers are connected."""
+    global TOOLS
+    TOOLS = list(BUILTIN_TOOLS)
+    if MCP and MCP.tool_schemas:
+        TOOLS.extend(MCP.tool_schemas)
+
+
+def dispatch_tool(name: str, args: dict) -> str:
+    """Dispatch a tool call to either built-in handler or MCP."""
+    # Check built-in first
+    handler = TOOL_HANDLERS.get(name)
+    if handler:
+        return handler(**args)
+    # Check MCP
+    if MCP and name in MCP.tool_names:
+        return MCP.call_tool(name, args)
+    return f"Unknown tool: {name}"
