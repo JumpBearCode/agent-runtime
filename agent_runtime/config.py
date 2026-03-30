@@ -17,6 +17,7 @@ MODEL = os.environ["MODEL_ID"]
 # Set by _setup_workspace() at startup
 WORKDIR = Path.cwd()
 SANDBOX_ENABLED = False
+SANDBOX_MODE = "ephemeral"  # "ephemeral" (remove on exit) or "persistent" (keep running)
 CONTAINER_NAME = "agent-sandbox"
 SANDBOX_IMAGE = "agent-sandbox"
 

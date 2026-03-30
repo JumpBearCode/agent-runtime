@@ -1,10 +1,11 @@
 """CLI entrypoint — argparse + REPL."""
 
 import argparse
+import signal
 from pathlib import Path
 
 from . import config
-from .sandbox import setup_workspace
+from .sandbox import setup_workspace, teardown_sandbox
 from .tasks import TaskManager
 from .skills import SkillLoader
 from .background import BackgroundManager
@@ -59,10 +60,23 @@ def main():
         "--confirm", action="store_true", default=False,
         help="Enable human-in-the-loop confirmation for dangerous tool calls.",
     )
+    parser.add_argument(
+        "--keep-sandbox", action="store_true", default=False,
+        help="Keep sandbox container running after exit (default: remove on exit).",
+    )
     args = parser.parse_args()
 
     # Initialize workspace + sandbox
+    if args.keep_sandbox:
+        config.SANDBOX_MODE = "persistent"
     setup_workspace(args.workspace)
+
+    # Register signal handlers so ephemeral sandbox gets cleaned up on SIGTERM/SIGINT
+    if config.SANDBOX_ENABLED and config.SANDBOX_MODE == "ephemeral":
+        def _signal_cleanup(signum, frame):
+            teardown_sandbox()
+            raise SystemExit(1)
+        signal.signal(signal.SIGTERM, _signal_cleanup)
 
     # Thinking config
     config.THINKING_ENABLED = args.thinking
@@ -100,7 +114,8 @@ def main():
     print("=" * 60)
     print(f"  Workspace: {config.WORKDIR}")
     if config.SANDBOX_ENABLED:
-        print(f"  Sandbox:   Docker ({config.CONTAINER_NAME})")
+        mode_label = "ephemeral" if config.SANDBOX_MODE == "ephemeral" else "persistent"
+        print(f"  Sandbox:   Docker ({config.CONTAINER_NAME}, {mode_label})")
     else:
         if args.workspace is None:
             print("  \033[33mSandbox:   OFF — bash can escape safe_path.\033[0m")
@@ -159,6 +174,8 @@ def main():
         if tracker.turn_count > 0:
             print(f"\n{tracker.format_total(config.MODEL)}")
         mcp.shutdown()
+        if config.SANDBOX_ENABLED and config.SANDBOX_MODE == "ephemeral":
+            teardown_sandbox()
 
 
 if __name__ == "__main__":

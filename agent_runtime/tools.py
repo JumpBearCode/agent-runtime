@@ -14,6 +14,11 @@ HOOKS = None      # HookManager instance
 
 
 def safe_path(p: str) -> Path:
+    # When sandbox is enabled, the model sees /workspace as root.
+    # Translate /workspace/... paths to the host WORKDIR equivalent.
+    if config.SANDBOX_ENABLED and p.startswith("/workspace"):
+        p = p[len("/workspace"):]          # strip prefix
+        p = p.lstrip("/") if p else "."    # "/workspace/foo" → "foo", "/workspace" → "."
     path = (config.WORKDIR / p).resolve()
     if not path.is_relative_to(config.WORKDIR):
         raise ValueError(f"Path escapes workspace: {p}")

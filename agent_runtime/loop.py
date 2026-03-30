@@ -37,7 +37,19 @@ def _format_args(tool_name: str, args: dict) -> str:
 
 def build_system_prompt(skill_loader, mcp_manager=None) -> str:
     skills = skill_loader.get_descriptions() if skill_loader else "(no skills available)"
-    sandbox_note = " (sandboxed via Docker)" if config.SANDBOX_ENABLED else ""
+    if config.SANDBOX_ENABLED:
+        sandbox_note = " (sandboxed via Docker)"
+        workdir = "/workspace"
+        workspace_hint = (
+            "/workspace is the project root directory (mounted from the host). "
+            "Initialize and create all project files directly under /workspace — "
+            "do NOT create a nested subdirectory with the project name. "
+            "Use /workspace as your working directory for all operations."
+        )
+    else:
+        sandbox_note = ""
+        workdir = str(config.WORKDIR)
+        workspace_hint = ""
 
     mcp_section = ""
     if mcp_manager and mcp_manager.tool_names:
@@ -48,7 +60,8 @@ For example, use mcp_github_* tools for ANY GitHub operations instead of curl/gh
 Available MCP tools: {mcp_tools_list}
 """
 
-    return f"""You are a coding agent at {config.WORKDIR}.{sandbox_note}
+    return f"""You are a coding agent at {workdir}.{sandbox_note}
+{workspace_hint}
 Use task tools to plan and track multi-step work. Mark in_progress before starting, completed when done.
 Use load_skill to access specialized knowledge before tackling unfamiliar topics.
 Use subagent for isolated exploration. Use background_run for long-running commands.
