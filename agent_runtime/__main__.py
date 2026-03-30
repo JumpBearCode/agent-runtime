@@ -94,7 +94,7 @@ def main():
         mcp.start(mcp_config)
         tools_mod.rebuild_tools()
 
-    system = build_system_prompt(skill_loader)
+    system = build_system_prompt(skill_loader, mcp_manager=mcp)
 
     # Startup info
     print("=" * 60)

@@ -29,19 +29,32 @@ def _format_args(tool_name: str, args: dict) -> str:
         return f"  {args.get('name', '')}"
     if tool_name == "background_run":
         return f"  $ {args.get('command', '')[:120]}"
+    if tool_name.startswith("mcp_"):
+        summary = json.dumps(args, ensure_ascii=False)[:120]
+        return f"  {summary}"
     return ""
 
 
-def build_system_prompt(skill_loader) -> str:
+def build_system_prompt(skill_loader, mcp_manager=None) -> str:
     skills = skill_loader.get_descriptions() if skill_loader else "(no skills available)"
     sandbox_note = " (sandboxed via Docker)" if config.SANDBOX_ENABLED else ""
+
+    mcp_section = ""
+    if mcp_manager and mcp_manager.tool_names:
+        mcp_tools_list = ", ".join(sorted(mcp_manager.tool_names))
+        mcp_section = f"""
+MCP (Model Context Protocol) tools are available. ALWAYS prefer MCP tools over bash/curl for interacting with external services.
+For example, use mcp_github_* tools for ANY GitHub operations instead of curl/gh/git commands.
+Available MCP tools: {mcp_tools_list}
+"""
+
     return f"""You are a coding agent at {config.WORKDIR}.{sandbox_note}
 Use task tools to plan and track multi-step work. Mark in_progress before starting, completed when done.
 Use load_skill to access specialized knowledge before tackling unfamiliar topics.
 Use subagent for isolated exploration. Use background_run for long-running commands.
 All file operations (read_file, write_file, edit_file) are restricted to the workspace directory.
 Prefer tools over prose.
-
+{mcp_section}
 Skills available:
 {skills}"""
 

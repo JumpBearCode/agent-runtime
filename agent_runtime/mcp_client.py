@@ -11,9 +11,9 @@ Config format (mcp.json):
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
     },
     "github": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
-      "env": {"GITHUB_TOKEN": "ghp_xxx"}
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {"Authorization": "Bearer ghp_xxx"}
     }
   }
 }
@@ -29,6 +29,7 @@ from pathlib import Path
 try:
     from mcp import ClientSession, StdioServerParameters
     from mcp.client.stdio import stdio_client
+    from mcp.client.streamable_http import streamablehttp_client
     from contextlib import AsyncExitStack
     MCP_AVAILABLE = True
 except ImportError:
@@ -82,7 +83,8 @@ class MCPManager:
         future = asyncio.run_coroutine_threadsafe(
             self._connect_all(servers), self._loop
         )
-        future.result(timeout=30)  # block until connected
+        # Timeout is generous to allow OAuth browser flows
+        future.result(timeout=180)
 
     async def _connect_all(self, servers: dict):
         """Connect to all MCP servers and collect their tools."""
@@ -92,20 +94,40 @@ class MCPManager:
         for name, server_cfg in servers.items():
             try:
                 await self._connect_one(name, server_cfg)
-            except Exception as e:
+            except BaseException as e:
                 print(f"  \033[33m[warn] MCP server '{name}' failed: {e}\033[0m")
 
     async def _connect_one(self, name: str, server_cfg: dict):
-        """Connect to a single MCP server via stdio."""
-        params = StdioServerParameters(
-            command=server_cfg["command"],
-            args=server_cfg.get("args", []),
-            env=server_cfg.get("env"),
-        )
-        transport = await self._exit_stack.enter_async_context(
-            stdio_client(params)
-        )
-        read_stream, write_stream = transport
+        """Connect to a single MCP server via stdio or HTTP (with optional OAuth)."""
+        server_type = server_cfg.get("type", "stdio")
+
+        if server_type == "http":
+            url = server_cfg["url"]
+            headers = server_cfg.get("headers", {})
+            has_auth = any(k.lower() == "authorization" for k in headers)
+
+            if not has_auth:
+                raise ValueError(
+                    f"HTTP MCP server '{name}' requires an Authorization header. "
+                    f"OAuth is not supported — add a token to mcp.json:\n"
+                    f'  "headers": {{"Authorization": "Bearer <your-token>"}}'
+                )
+
+            transport = await self._exit_stack.enter_async_context(
+                streamablehttp_client(url, headers=headers)
+            )
+            read_stream, write_stream, _ = transport
+        else:
+            params = StdioServerParameters(
+                command=server_cfg["command"],
+                args=server_cfg.get("args", []),
+                env=server_cfg.get("env"),
+            )
+            transport = await self._exit_stack.enter_async_context(
+                stdio_client(params)
+            )
+            read_stream, write_stream = transport
+
         session = await self._exit_stack.enter_async_context(
             ClientSession(read_stream, write_stream)
         )
