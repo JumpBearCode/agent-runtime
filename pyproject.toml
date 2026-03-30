@@ -12,6 +12,6 @@ agent = "agent_runtime.__main__:main"
 
 [tool.uv.workspace]
 members = [
-    "weather-forecast",
-    "finance",
+    "weather-cli",
 ]
+

@@ -8,6 +8,7 @@ from .tools import TOOLS, dispatch_tool
 from .subagent import run_subagent
 from .compression import micro_compact, auto_compact, estimate_tokens
 from .background import BackgroundManager
+from .tracking import TokenTracker
 
 TASK_TOOL_NAMES = {"task_create", "task_update", "task_list", "task_get"}
 
@@ -119,12 +120,14 @@ def _stream_response(system: str, messages: list):
                 stop_reason = event.delta.stop_reason
 
         # Get the final message with properly constructed content blocks
-        content_blocks = stream.get_final_message().content
+        final_message = stream.get_final_message()
+        content_blocks = final_message.content
+        usage = final_message.usage
 
-    return content_blocks, stop_reason
+    return content_blocks, stop_reason, usage
 
 
-def agent_loop(messages: list, system: str, bg: BackgroundManager):
+def agent_loop(messages: list, system: str, bg: BackgroundManager, tracker: TokenTracker = None):
     rounds_since_task = 0
 
     while True:
@@ -146,7 +149,12 @@ def agent_loop(messages: list, system: str, bg: BackgroundManager):
                 messages.append({"role": "user", "content": bg_block})
 
         # Stream the response (text/thinking printed live)
-        content_blocks, stop_reason = _stream_response(system, messages)
+        content_blocks, stop_reason, usage = _stream_response(system, messages)
+
+        # Track token usage
+        if tracker and usage:
+            turn = tracker.record(usage)
+            print(f"\033[2m  [{tracker.format_turn(turn, config.MODEL)}]\033[0m")
 
         # Append full assistant message (including thinking blocks for context)
         messages.append({"role": "assistant", "content": content_blocks})

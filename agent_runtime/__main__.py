@@ -11,6 +11,7 @@ from .background import BackgroundManager
 from .compression import auto_compact
 from .loop import agent_loop, build_system_prompt
 from .mcp_client import MCPManager
+from .tracking import TokenTracker
 from .hooks import HookManager, HumanConfirmHook
 from . import tools as tools_mod
 
@@ -71,6 +72,7 @@ def main():
     tasks = TaskManager(config.WORKDIR / ".tasks")
     skill_loader = SkillLoader(config.WORKDIR / "skills")
     bg = BackgroundManager()
+    tracker = TokenTracker()
     mcp = MCPManager()
     hooks = HookManager()
 
@@ -135,7 +137,7 @@ def main():
                 continue
             history.append({"role": "user", "content": query})
             try:
-                agent_loop(history, system, bg)
+                agent_loop(history, system, bg, tracker)
             except KeyboardInterrupt:
                 print("\n[interrupted]")
                 if history and history[-1]["role"] == "assistant":
@@ -153,6 +155,8 @@ def main():
                         print(block.text)
             print()
     finally:
+        if tracker.turn_count > 0:
+            print(f"\n{tracker.format_total(config.MODEL)}")
         mcp.shutdown()
 
 
