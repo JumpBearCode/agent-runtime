@@ -86,11 +86,11 @@ class TokenTracker:
     def format_turn(self, turn: TurnUsage, model: str) -> str:
         """Format a single turn's usage for display."""
         cost = turn.cost(model)
-        parts = [f"in={turn.input_tokens}", f"out={turn.output_tokens}"]
+        # Show total input (uncached + cache_read + cache_write) to match console
+        total_in = turn.input_tokens + turn.cache_read_input_tokens + turn.cache_creation_input_tokens
+        parts = [f"in={total_in}", f"out={turn.output_tokens}"]
         if turn.cache_read_input_tokens:
-            parts.append(f"cache_read={turn.cache_read_input_tokens}")
-        if turn.cache_creation_input_tokens:
-            parts.append(f"cache_write={turn.cache_creation_input_tokens}")
+            parts.append(f"cached={turn.cache_read_input_tokens}")
         parts.append(f"${cost:.4f}")
         return " | ".join(parts)
 
@@ -98,8 +98,10 @@ class TokenTracker:
         """Format total usage summary."""
         t = self._total
         cost = t.cost(model)
+        total_in = t.input_tokens + t.cache_read_input_tokens + t.cache_creation_input_tokens
+        total_all = total_in + t.output_tokens
         return (
-            f"Tokens: {t.input_tokens:,} in + {t.output_tokens:,} out = {t.total_tokens:,} total"
+            f"Tokens: {total_in:,} in + {t.output_tokens:,} out = {total_all:,} total"
             f" | Cache: {t.cache_read_input_tokens:,} read, {t.cache_creation_input_tokens:,} write"
             f" | Cost: ${cost:.4f}"
             f" | Turns: {self.turn_count}"

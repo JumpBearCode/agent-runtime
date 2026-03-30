@@ -47,10 +47,46 @@ Skills available:
 
 
 def _stream_response(system: str, messages: list):
-    """Stream API call, print text/thinking live, return (content_blocks, stop_reason)."""
+    """Stream API call, print text/thinking live, return (content_blocks, stop_reason, usage)."""
+    # -- Prompt caching: mark system, tools tail, and messages tail --
+    # System prompt as cacheable block
+    cached_system = [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}]
+
+    # Cache breakpoint on last tool schema
+    cached_tools = [dict(t) for t in TOOLS]  # shallow copy to avoid mutating originals
+    if cached_tools:
+        cached_tools[-1] = {**cached_tools[-1], "cache_control": {"type": "ephemeral"}}
+
+    # Cache breakpoint on the last user message (so next turn hits cache on entire prefix)
+    # Max 4 cache_control blocks allowed by API: system(1) + tools(1) + messages(max 2)
+    # Strip old cache_control from all messages, then add to last user message only
+    for msg in messages:
+        content = msg.get("content")
+        if isinstance(content, list):
+            for block in content:
+                if isinstance(block, dict):
+                    block.pop("cache_control", None)
+
+    if messages:
+        last = messages[-1]
+        if last["role"] == "user":
+            content = last["content"]
+            if isinstance(content, str):
+                messages[-1] = {**last, "content": [
+                    {"type": "text", "text": content, "cache_control": {"type": "ephemeral"}}
+                ]}
+            elif isinstance(content, list) and content:
+                last_block = content[-1]
+                if isinstance(last_block, dict):
+                    last_block["cache_control"] = {"type": "ephemeral"}
+
+    max_tokens = 16000
+    if config.THINKING_ENABLED:
+        max_tokens = max(max_tokens, config.THINKING_BUDGET + 8000)
+
     kwargs = dict(
-        model=config.MODEL, system=system, messages=messages,
-        tools=TOOLS, max_tokens=8000,
+        model=config.MODEL, system=cached_system, messages=messages,
+        tools=cached_tools, max_tokens=max_tokens,
     )
     if config.THINKING_ENABLED:
         kwargs["thinking"] = {"type": "enabled", "budget_tokens": config.THINKING_BUDGET}

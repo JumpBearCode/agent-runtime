@@ -153,6 +153,7 @@ def main():
                 for block in response_content:
                     if hasattr(block, "text"):
                         print(block.text)
+            print(f"\033[2m{tracker.format_total(config.MODEL)}\033[0m")
             print()
     finally:
         if tracker.turn_count > 0:
