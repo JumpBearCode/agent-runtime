@@ -11,6 +11,7 @@ from .background import BackgroundManager
 from .compression import auto_compact
 from .loop import agent_loop, build_system_prompt
 from .mcp_client import MCPManager
+from .hooks import HookManager, HumanConfirmHook
 from . import tools as tools_mod
 
 
@@ -53,6 +54,10 @@ def main():
         "--mcp-config", default=None,
         help="Path to MCP config JSON file (default: looks for mcp.json in workspace).",
     )
+    parser.add_argument(
+        "--confirm", action="store_true", default=False,
+        help="Enable human-in-the-loop confirmation for dangerous tool calls.",
+    )
     args = parser.parse_args()
 
     # Initialize workspace + sandbox
@@ -67,12 +72,17 @@ def main():
     skill_loader = SkillLoader(config.WORKDIR / "skills")
     bg = BackgroundManager()
     mcp = MCPManager()
+    hooks = HookManager()
+
+    if args.confirm:
+        hooks.add(HumanConfirmHook())
 
     # Wire managers into tools module
     tools_mod.TASKS = tasks
     tools_mod.SKILL_LOADER = skill_loader
     tools_mod.BG = bg
     tools_mod.MCP = mcp
+    tools_mod.HOOKS = hooks
 
     # MCP: load config and connect to servers
     mcp_config_path = Path(args.mcp_config) if args.mcp_config else config.WORKDIR / "mcp.json"
@@ -100,6 +110,8 @@ def main():
         print(f"  Thinking:  ON (budget: {config.THINKING_BUDGET} tokens)")
     if mcp.tool_names:
         print(f"  MCP tools: {len(mcp.tool_names)} from {len(mcp._servers)} server(s)")
+    if args.confirm:
+        print("  Confirm:   ON (dangerous tools require approval)")
     print("=" * 60)
     print("Multi-line input: end first line with \\ then blank line to submit.")
     print("Commands: /compact /tasks  |  quit/exit to leave.\n")

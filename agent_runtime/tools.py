@@ -10,6 +10,7 @@ TASKS = None      # TaskManager instance
 SKILL_LOADER = None  # SkillLoader instance
 BG = None         # BackgroundManager instance
 MCP = None        # MCPManager instance
+HOOKS = None      # HookManager instance
 
 
 def safe_path(p: str) -> Path:
@@ -133,7 +134,12 @@ def rebuild_tools():
 
 
 def dispatch_tool(name: str, args: dict) -> str:
-    """Dispatch a tool call to either built-in handler or MCP."""
+    """Dispatch a tool call — runs hooks, then routes to handler or MCP."""
+    # Pre-tool hook check
+    if HOOKS:
+        decision = HOOKS.before_tool(name, args)
+        if not decision.allowed:
+            return f"Blocked: {decision.reason}"
     # Check built-in first
     handler = TOOL_HANDLERS.get(name)
     if handler:
