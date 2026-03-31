@@ -14,6 +14,7 @@ from .loop import agent_loop, build_system_prompt
 from .mcp_client import MCPManager
 from .tracking import TokenTracker
 from .hooks import HookManager, HumanConfirmHook
+from .session import SessionStore
 from . import tools as tools_mod
 
 
@@ -64,6 +65,10 @@ def main():
         "--keep-sandbox", action="store_true", default=False,
         help="Keep sandbox container running after exit (default: remove on exit).",
     )
+    parser.add_argument(
+        "--session", "-s", default=None,
+        help="Session ID to resume. If omitted, starts a new session.",
+    )
     args = parser.parse_args()
 
     # Initialize workspace + sandbox
@@ -89,6 +94,7 @@ def main():
     tracker = TokenTracker()
     mcp = MCPManager()
     hooks = HookManager()
+    session = SessionStore()
 
     if args.confirm:
         hooks.add(HumanConfirmHook())
@@ -110,9 +116,18 @@ def main():
 
     system = build_system_prompt(skill_loader, mcp_manager=mcp)
 
+    # Session: resume or create new
+    if args.session:
+        history = session.load_session(args.session)
+        print(f"  Session:   {session.session_id} (resumed, {len(history)} messages)")
+    else:
+        session.new_session()
+        history = []
+
     # Startup info
     print("=" * 60)
     print(f"  Workspace: {config.WORKDIR}")
+    print(f"  Session:   {session.session_id}")
     if config.SANDBOX_ENABLED:
         mode_label = "ephemeral" if config.SANDBOX_MODE == "ephemeral" else "persistent"
         print(f"  Sandbox:   Docker ({config.CONTAINER_NAME}, {mode_label})")
@@ -133,7 +148,6 @@ def main():
     print("Multi-line input: end first line with \\ then blank line to submit.")
     print("Commands: /compact /tasks  |  quit/exit to leave.\n")
 
-    history = []
     try:
         while True:
             try:
@@ -151,6 +165,8 @@ def main():
                 print()
                 continue
             history.append({"role": "user", "content": query})
+            session.save_turn(history[-1])
+            prev_len = len(history)
             try:
                 agent_loop(history, system, bg, tracker)
             except KeyboardInterrupt:
@@ -163,6 +179,9 @@ def main():
                 if history and history[-1]["role"] == "assistant":
                     history.pop()
                 continue
+            # Persist all messages added by agent_loop
+            for msg in history[prev_len:]:
+                session.save_turn(msg)
             response_content = history[-1]["content"]
             if isinstance(response_content, list):
                 for block in response_content:
