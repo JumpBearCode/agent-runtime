@@ -40,7 +40,7 @@ def _get_client() -> DataFactoryManagementClient:
 # ---------------------------------------------------------------------------
 mcp = FastMCP(
     name="azure-data-factory",
-    description="MCP server that exposes Azure Data Factory resources as tools.",
+    instructions="MCP server that exposes Azure Data Factory resources as tools.",
 )
 
 

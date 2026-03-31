@@ -70,7 +70,7 @@ Skills available:
 {skills}"""
 
 
-def _stream_response(system: str, messages: list):
+def _stream_response(system: str, messages: list, on_event=None):
     """Stream API call, print text/thinking live, return (content_blocks, stop_reason, usage)."""
     # -- Prompt caching: mark system, tools tail, and messages tail --
     # System prompt as cacheable block
@@ -142,6 +142,8 @@ def _stream_response(system: str, messages: list):
                     in_thinking = True
                     current_thinking = ""
                     sys.stdout.write("\033[2m")  # dim for thinking
+                    if on_event:
+                        on_event({"type": "thinking_start"})
                 elif block.type == "tool_use":
                     current_tool_name = block.name
                     current_tool_id = block.id
@@ -153,10 +155,14 @@ def _stream_response(system: str, messages: list):
                     sys.stdout.write(delta.text)
                     sys.stdout.flush()
                     current_text += delta.text
+                    if on_event:
+                        on_event({"type": "text_delta", "text": delta.text})
                 elif delta.type == "thinking_delta":
                     sys.stdout.write(delta.thinking)
                     sys.stdout.flush()
                     current_thinking += delta.thinking
+                    if on_event:
+                        on_event({"type": "thinking_delta", "text": delta.thinking})
                 elif delta.type == "input_json_delta":
                     current_tool_input_json += delta.partial_json
 
@@ -165,9 +171,13 @@ def _stream_response(system: str, messages: list):
                     # Use the text block object from the final message
                     in_text = False
                     sys.stdout.write("\n")
+                    if on_event:
+                        on_event({"type": "text_stop"})
                 elif current_block_type == "thinking":
                     in_thinking = False
                     sys.stdout.write("\033[0m\n")  # reset dim
+                    if on_event:
+                        on_event({"type": "thinking_stop"})
                 elif current_block_type == "tool_use":
                     # Parse accumulated JSON
                     try:
@@ -183,6 +193,12 @@ def _stream_response(system: str, messages: list):
         final_message = stream.get_final_message()
         content_blocks = final_message.content
         usage = final_message.usage
+
+    if on_event:
+        on_event({"type": "message_done", "stop_reason": stop_reason,
+                  "usage": {"input": usage.input_tokens, "output": usage.output_tokens,
+                            "cache_creation": getattr(usage, 'cache_creation_input_tokens', 0),
+                            "cache_read": getattr(usage, 'cache_read_input_tokens', 0)}})
 
     return content_blocks, stop_reason, usage
 
@@ -204,23 +220,32 @@ def _inject_todo(messages: list):
         messages.insert(0, {"role": "user", "content": todo_block})
 
 
-def agent_loop(messages: list, system: str, tracker: TokenTracker = None, session=None):
+def agent_loop(messages: list, system: str, tracker: TokenTracker = None, session=None, on_event=None):
     rounds_since_todo = 0
 
     while True:
         micro_compact(messages)
         if should_compact(tracker):
             print("[auto_compact triggered]")
+            if on_event:
+                on_event({"type": "status", "message": "auto_compact triggered"})
             messages[:] = auto_compact(messages, tracker)
             _inject_todo(messages)
 
         # Stream the response (text/thinking printed live)
-        content_blocks, stop_reason, usage = _stream_response(system, messages)
+        content_blocks, stop_reason, usage = _stream_response(system, messages, on_event=on_event)
 
         # Track token usage
         if tracker and usage:
             turn = tracker.record(usage)
             print(f"\033[2m  [{tracker.format_turn(turn, config.MODEL)}]\033[0m")
+            if on_event:
+                on_event({"type": "token_usage",
+                          "turn": {"input": turn.input_tokens, "output": turn.output_tokens,
+                                   "cache_creation": turn.cache_creation_input_tokens,
+                                   "cache_read": turn.cache_read_input_tokens},
+                          "total": {"input": tracker.total.input_tokens, "output": tracker.total.output_tokens},
+                          "cost": tracker.format_turn(turn, config.MODEL)})
 
         # Append full assistant message (including thinking blocks for context)
         messages.append({"role": "assistant", "content": content_blocks})
@@ -228,6 +253,8 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, sessio
             session.save_turn(messages[-1])
 
         if stop_reason != "tool_use":
+            if on_event:
+                on_event({"type": "done", "stop_reason": stop_reason})
             return
 
         # Execute tools
@@ -237,6 +264,9 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, sessio
 
         for block in content_blocks:
             if block.type == "tool_use":
+                if on_event:
+                    on_event({"type": "tool_call", "id": block.id, "name": block.name,
+                              "args": block.input, "args_summary": _format_args(block.name, block.input)})
                 if block.name == "subagent":
                     desc = block.input.get("description", "subtask")
                     print(f"\033[33m> subagent\033[0m  ({desc}) {block.input['prompt'][:80]}")
@@ -258,6 +288,9 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, sessio
                 if result_preview:
                     print(f"  {result_preview}")
                 results.append({"type": "tool_result", "tool_use_id": block.id, "content": str(output)})
+                if on_event:
+                    on_event({"type": "tool_result", "id": block.id, "name": block.name,
+                              "output": str(output)[:3000], "is_error": str(output).startswith("Error:")})
 
                 if block.name in TODO_TOOL_NAMES:
                     used_todo_tool = True

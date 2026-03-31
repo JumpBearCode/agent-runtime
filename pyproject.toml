@@ -4,10 +4,31 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "anthropic>=0.25.0",
+    "azure-identity>=1.25.3",
+    "azure-mgmt-datafactory>=9.3.0",
     "mcp>=1.26.0",
     "python-dotenv>=1.0.0",
 ]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.optional-dependencies]
+frontend = ["agent-frontend[all]"]
+
 [project.scripts]
 agent = "agent_runtime.__main__:main"
+
+[tool.uv.workspace]
+members = ["agent_frontend"]
+
+[tool.uv.sources]
+agent-runtime = { workspace = true }
+agent-frontend = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
 

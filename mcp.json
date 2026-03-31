@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "adf": {
+      "type": "stdio",
+      "command": "uv",
+      "args": ["run", "python", "adf_mcp_server.py"],
+      "env": {}
+    }
+  }
+}
