@@ -8,7 +8,6 @@ from . import config
 # Lazy references — these are set by __main__.py after initialization
 TODO = None       # TodoManager instance
 SKILL_LOADER = None  # SkillLoader instance
-BG = None         # BackgroundManager instance
 MCP = None        # MCPManager instance
 HOOKS = None      # HookManager instance
 
@@ -86,8 +85,6 @@ TOOL_HANDLERS = {
     "todo_write":       lambda **kw: TODO.write(kw["items"]),
     "todo_read":        lambda **kw: TODO.read(),
     "load_skill":       lambda **kw: SKILL_LOADER.get_content(kw["name"]),
-    "background_run":   lambda **kw: BG.run(kw["command"]),
-    "check_background": lambda **kw: BG.check(kw.get("task_id")),
     "compact":          lambda **kw: "Manual compression requested.",
 }
 
@@ -112,10 +109,6 @@ BUILTIN_TOOLS = CHILD_TOOLS + [
      "input_schema": {"type": "object", "properties": {"name": {"type": "string", "description": "Skill name to load"}}, "required": ["name"]}},
     {"name": "subagent", "description": "Spawn a subagent with fresh context. It shares the filesystem but not conversation history.",
      "input_schema": {"type": "object", "properties": {"prompt": {"type": "string"}, "description": {"type": "string", "description": "Short description of the task"}}, "required": ["prompt"]}},
-    {"name": "background_run", "description": "Run command in background thread. Returns task_id immediately.",
-     "input_schema": {"type": "object", "properties": {"command": {"type": "string"}}, "required": ["command"]}},
-    {"name": "check_background", "description": "Check background task status. Omit task_id to list all.",
-     "input_schema": {"type": "object", "properties": {"task_id": {"type": "string"}}}},
     {"name": "compact", "description": "Trigger manual conversation compression.",
      "input_schema": {"type": "object", "properties": {"focus": {"type": "string", "description": "What to preserve in the summary"}}}},
 ]

@@ -7,8 +7,7 @@ from . import config
 from . import tools as tools_mod
 from .tools import TOOLS, dispatch_tool
 from .subagent import run_subagent
-from .compression import micro_compact, auto_compact, estimate_tokens
-from .background import BackgroundManager
+from .compression import micro_compact, auto_compact, should_compact
 from .tracking import TokenTracker
 
 TODO_TOOL_NAMES = {"todo_write", "todo_read"}
@@ -28,8 +27,6 @@ def _format_args(tool_name: str, args: dict) -> str:
         return ""
     if tool_name == "load_skill":
         return f"  {args.get('name', '')}"
-    if tool_name == "background_run":
-        return f"  $ {args.get('command', '')[:120]}"
     if tool_name.startswith("mcp_"):
         summary = json.dumps(args, ensure_ascii=False)[:120]
         return f"  {summary}"
@@ -65,7 +62,7 @@ Available MCP tools: {mcp_tools_list}
 {workspace_hint}
 Use todo_write to plan multi-step work and track progress. Update the todo list as you complete steps. Todo state survives compaction.
 Use load_skill to access specialized knowledge before tackling unfamiliar topics.
-Use subagent for isolated exploration. Use background_run for long-running commands.
+Use subagent for isolated exploration.
 All file operations (read_file, write_file, edit_file) are restricted to the workspace directory.
 Prefer tools over prose.
 {mcp_section}
@@ -191,35 +188,31 @@ def _stream_response(system: str, messages: list):
 
 
 def _inject_todo(messages: list):
-    """Inject current todo state at the start of messages (after compact)."""
-    if tools_mod.TODO and tools_mod.TODO.has_content:
-        messages.insert(0, {
-            "role": "user",
-            "content": f"<todo>\n{tools_mod.TODO.read()}\n</todo>",
-        })
+    """Inject current todo state into the first user message (after compact).
+
+    Merges into the existing first user message to preserve user/assistant
+    alternation instead of inserting a separate user message at index 0.
+    """
+    if not (tools_mod.TODO and tools_mod.TODO.has_content):
+        return
+    todo_block = f"<todo>\n{tools_mod.TODO.read()}\n</todo>\n\n"
+    # After auto_compact, messages[0] is always a user message — prepend todo to it.
+    if messages and messages[0]["role"] == "user" and isinstance(messages[0]["content"], str):
+        messages[0]["content"] = todo_block + messages[0]["content"]
+    else:
+        # Fallback: shouldn't happen after auto_compact, but be safe.
+        messages.insert(0, {"role": "user", "content": todo_block})
 
 
-def agent_loop(messages: list, system: str, bg: BackgroundManager, tracker: TokenTracker = None, session=None):
+def agent_loop(messages: list, system: str, tracker: TokenTracker = None, session=None):
     rounds_since_todo = 0
 
     while True:
         micro_compact(messages)
-        if estimate_tokens(messages) > config.COMPACT_THRESHOLD:
+        if should_compact(tracker):
             print("[auto_compact triggered]")
-            messages[:] = auto_compact(messages)
+            messages[:] = auto_compact(messages, tracker)
             _inject_todo(messages)
-
-        # Drain background notifications
-        notifs = bg.drain_notifications()
-        if notifs and messages:
-            notif_text = "\n".join(
-                f"[bg:{n['task_id']}] {n['status']}: {n['result']}" for n in notifs
-            )
-            bg_block = f"\n<background-results>\n{notif_text}\n</background-results>"
-            if messages[-1]["role"] == "user" and isinstance(messages[-1]["content"], str):
-                messages[-1]["content"] += bg_block
-            else:
-                messages.append({"role": "user", "content": bg_block})
 
         # Stream the response (text/thinking printed live)
         content_blocks, stop_reason, usage = _stream_response(system, messages)
@@ -279,5 +272,5 @@ def agent_loop(messages: list, system: str, bg: BackgroundManager, tracker: Toke
 
         if manual_compact:
             print("[manual compact]")
-            messages[:] = auto_compact(messages)
+            messages[:] = auto_compact(messages, tracker)
             _inject_todo(messages)

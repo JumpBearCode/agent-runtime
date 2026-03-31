@@ -8,7 +8,6 @@ from . import config
 from .sandbox import setup_workspace, teardown_sandbox
 from .todo import Todo
 from .skills import SkillLoader
-from .background import BackgroundManager
 from .compression import auto_compact
 from .loop import agent_loop, build_system_prompt, _inject_todo
 from .mcp_client import MCPManager
@@ -90,7 +89,6 @@ def main():
     # Initialize managers
     todo = Todo()
     skill_loader = SkillLoader(config.WORKDIR / "skills")
-    bg = BackgroundManager()
     tracker = TokenTracker()
     mcp = MCPManager()
     hooks = HookManager()
@@ -102,7 +100,6 @@ def main():
     # Wire managers into tools module
     tools_mod.TODO = todo
     tools_mod.SKILL_LOADER = skill_loader
-    tools_mod.BG = bg
     tools_mod.MCP = mcp
     tools_mod.HOOKS = hooks
 
@@ -157,7 +154,7 @@ def main():
             if query.strip().lower() in ("q", "exit", ""):
                 break
             if query.strip() == "/compact":
-                history[:] = auto_compact(history)
+                history[:] = auto_compact(history, tracker)
                 _inject_todo(history)
                 print("[compacted]\n")
                 continue
@@ -168,7 +165,7 @@ def main():
             history.append({"role": "user", "content": query})
             session.save_turn(history[-1])
             try:
-                agent_loop(history, system, bg, tracker, session=session)
+                agent_loop(history, system, tracker, session=session)
             except KeyboardInterrupt:
                 print("\n[interrupted]")
                 if history and history[-1]["role"] == "assistant":

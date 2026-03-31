@@ -1,4 +1,4 @@
-"""Context compression — micro_compact, auto_compact."""
+"""Context compression — micro_compact, auto_compact, should_compact."""
 
 import json
 import time
@@ -6,22 +6,29 @@ import time
 from . import config
 
 
-def estimate_tokens(messages: list) -> int:
-    return len(str(messages)) // 4
+def should_compact(tracker) -> bool:
+    """Check if last turn's actual context size exceeds threshold.
+
+    Uses real token counts from the API response instead of heuristics.
+    Returns False on the first turn (no history yet) — context is always small then.
+    """
+    if not tracker or not tracker._turns:
+        return False
+    last = tracker._turns[-1]
+    actual_context = last.input_tokens + last.cache_read_input_tokens + last.cache_creation_input_tokens
+    return actual_context > config.COMPACT_THRESHOLD
 
 
-def micro_compact(messages: list) -> list:
-    # --- Clear old thinking blocks (keep only the most recent one) ---
+def micro_compact(messages: list) -> None:
+    """In-place compression: strip old thinking blocks and truncate old tool results."""
+    # --- Strip old thinking blocks ---
     if config.THINKING_ENABLED:
-        thinking_msgs = []
-        for msg_idx, msg in enumerate(messages):
+        for msg in messages[:-1]:
             if msg["role"] == "assistant" and isinstance(msg.get("content"), list):
-                for block in msg["content"]:
-                    if hasattr(block, "type") and block.type == "thinking":
-                        thinking_msgs.append((msg_idx, block))
-        # Replace all but the last thinking block with a short placeholder
-        for msg_idx, block in thinking_msgs[:-1]:
-            block.thinking = "[thinking compacted]"
+                msg["content"] = [
+                    b for b in msg["content"]
+                    if not (hasattr(b, "type") and b.type == "thinking")
+                ]
 
     # --- Clear old tool results ---
     tool_results = []
@@ -31,7 +38,7 @@ def micro_compact(messages: list) -> list:
                 if isinstance(part, dict) and part.get("type") == "tool_result":
                     tool_results.append((msg_idx, part_idx, part))
     if len(tool_results) <= config.KEEP_RECENT:
-        return messages
+        return
     tool_name_map = {}
     for msg in messages:
         if msg["role"] == "assistant":
@@ -46,10 +53,10 @@ def micro_compact(messages: list) -> list:
             tool_id = result.get("tool_use_id", "")
             tool_name = tool_name_map.get(tool_id, "unknown")
             result["content"] = f"[Previous: used {tool_name}]"
-    return messages
 
 
-def auto_compact(messages: list) -> list:
+def auto_compact(messages: list, tracker=None) -> list:
+    # Save full transcript to disk for recovery/debugging
     transcript_dir = config.WORKDIR / ".transcripts"
     transcript_dir.mkdir(exist_ok=True)
     transcript_path = transcript_dir / f"transcript_{int(time.time())}.jsonl"
@@ -57,7 +64,9 @@ def auto_compact(messages: list) -> list:
         for msg in messages:
             f.write(json.dumps(msg, default=str) + "\n")
     print(f"[transcript saved: {transcript_path}]")
-    conversation_text = json.dumps(messages, default=str)[:80000]
+
+    # LLM summarizes — take the TAIL so recent context is preserved
+    conversation_text = json.dumps(messages, default=str)[-80000:]
     response = config.client.messages.create(
         model=config.MODEL,
         messages=[{"role": "user", "content":
@@ -66,7 +75,10 @@ def auto_compact(messages: list) -> list:
             "Be concise but preserve critical details.\n\n" + conversation_text}],
         max_tokens=2000,
     )
+    if tracker and response.usage:
+        tracker.record(response.usage)
     summary = response.content[0].text
     return [
-        {"role": "user", "content": f"[Conversation compressed. Transcript: {transcript_path}]\n\n{summary}\n\nContinue working."},
+        {"role": "user", "content": f"[Conversation compressed]\n\n{summary}"},
+        {"role": "assistant", "content": "Understood. Continuing from the summary above."},
     ]
