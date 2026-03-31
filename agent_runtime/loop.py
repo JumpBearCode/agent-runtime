@@ -199,7 +199,7 @@ def _inject_todo(messages: list):
         })
 
 
-def agent_loop(messages: list, system: str, bg: BackgroundManager, tracker: TokenTracker = None):
+def agent_loop(messages: list, system: str, bg: BackgroundManager, tracker: TokenTracker = None, session=None):
     rounds_since_todo = 0
 
     while True:
@@ -231,6 +231,8 @@ def agent_loop(messages: list, system: str, bg: BackgroundManager, tracker: Toke
 
         # Append full assistant message (including thinking blocks for context)
         messages.append({"role": "assistant", "content": content_blocks})
+        if session:
+            session.save_turn(messages[-1])
 
         if stop_reason != "tool_use":
             return
@@ -272,6 +274,8 @@ def agent_loop(messages: list, system: str, bg: BackgroundManager, tracker: Toke
             results.append({"type": "text", "text": f"<todo>\n{tools_mod.TODO.read()}\n</todo>"})
 
         messages.append({"role": "user", "content": results})
+        if session:
+            session.save_turn(messages[-1])
 
         if manual_compact:
             print("[manual compact]")

@@ -167,9 +167,8 @@ def main():
                 continue
             history.append({"role": "user", "content": query})
             session.save_turn(history[-1])
-            prev_len = len(history)
             try:
-                agent_loop(history, system, bg, tracker)
+                agent_loop(history, system, bg, tracker, session=session)
             except KeyboardInterrupt:
                 print("\n[interrupted]")
                 if history and history[-1]["role"] == "assistant":
@@ -180,9 +179,6 @@ def main():
                 if history and history[-1]["role"] == "assistant":
                     history.pop()
                 continue
-            # Persist all messages added by agent_loop
-            for msg in history[prev_len:]:
-                session.save_turn(msg)
             response_content = history[-1]["content"]
             if isinstance(response_content, list):
                 for block in response_content:
