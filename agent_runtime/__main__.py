@@ -6,11 +6,11 @@ from pathlib import Path
 
 from . import config
 from .sandbox import setup_workspace, teardown_sandbox
-from .tasks import TaskManager
+from .todo import Todo
 from .skills import SkillLoader
 from .background import BackgroundManager
 from .compression import auto_compact
-from .loop import agent_loop, build_system_prompt
+from .loop import agent_loop, build_system_prompt, _inject_todo
 from .mcp_client import MCPManager
 from .tracking import TokenTracker
 from .hooks import HookManager, HumanConfirmHook
@@ -88,7 +88,7 @@ def main():
     config.THINKING_BUDGET = args.thinking_budget
 
     # Initialize managers
-    tasks = TaskManager(config.WORKDIR / ".tasks")
+    todo = Todo()
     skill_loader = SkillLoader(config.WORKDIR / "skills")
     bg = BackgroundManager()
     tracker = TokenTracker()
@@ -100,7 +100,7 @@ def main():
         hooks.add(HumanConfirmHook())
 
     # Wire managers into tools module
-    tools_mod.TASKS = tasks
+    tools_mod.TODO = todo
     tools_mod.SKILL_LOADER = skill_loader
     tools_mod.BG = bg
     tools_mod.MCP = mcp
@@ -146,7 +146,7 @@ def main():
         print("  Confirm:   ON (dangerous tools require approval)")
     print("=" * 60)
     print("Multi-line input: end first line with \\ then blank line to submit.")
-    print("Commands: /compact /tasks  |  quit/exit to leave.\n")
+    print("Commands: /compact /todo  |  quit/exit to leave.\n")
 
     try:
         while True:
@@ -158,10 +158,11 @@ def main():
                 break
             if query.strip() == "/compact":
                 history[:] = auto_compact(history)
+                _inject_todo(history)
                 print("[compacted]\n")
                 continue
-            if query.strip() == "/tasks":
-                print(tasks.list_all())
+            if query.strip() == "/todo":
+                print(todo.read())
                 print()
                 continue
             history.append({"role": "user", "content": query})

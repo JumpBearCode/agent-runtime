@@ -4,13 +4,14 @@ import json
 import sys
 
 from . import config
+from . import tools as tools_mod
 from .tools import TOOLS, dispatch_tool
 from .subagent import run_subagent
 from .compression import micro_compact, auto_compact, estimate_tokens
 from .background import BackgroundManager
 from .tracking import TokenTracker
 
-TASK_TOOL_NAMES = {"task_create", "task_update", "task_list", "task_get"}
+TODO_TOOL_NAMES = {"todo_write", "todo_read"}
 
 
 def _format_args(tool_name: str, args: dict) -> str:
@@ -21,10 +22,10 @@ def _format_args(tool_name: str, args: dict) -> str:
         return f"  {args.get('path', '')}"
     if tool_name in ("write_file", "edit_file"):
         return f"  {args.get('path', '')}"
-    if tool_name == "task_create":
-        return f"  \"{args.get('subject', '')}\""
-    if tool_name == "task_update":
-        return f"  #{args.get('task_id', '')} → {args.get('status', '')}"
+    if tool_name == "todo_write":
+        return f"  ({len(args.get('items', []))} items)"
+    if tool_name == "todo_read":
+        return ""
     if tool_name == "load_skill":
         return f"  {args.get('name', '')}"
     if tool_name == "background_run":
@@ -62,7 +63,7 @@ Available MCP tools: {mcp_tools_list}
 
     return f"""You are a coding agent at {workdir}.{sandbox_note}
 {workspace_hint}
-Use task tools to plan and track multi-step work. Mark in_progress before starting, completed when done.
+Use todo_write to plan multi-step work and track progress. Update the todo list as you complete steps. Todo state survives compaction.
 Use load_skill to access specialized knowledge before tackling unfamiliar topics.
 Use subagent for isolated exploration. Use background_run for long-running commands.
 All file operations (read_file, write_file, edit_file) are restricted to the workspace directory.
@@ -189,14 +190,24 @@ def _stream_response(system: str, messages: list):
     return content_blocks, stop_reason, usage
 
 
+def _inject_todo(messages: list):
+    """Inject current todo state at the start of messages (after compact)."""
+    if tools_mod.TODO and tools_mod.TODO.has_content:
+        messages.insert(0, {
+            "role": "user",
+            "content": f"<todo>\n{tools_mod.TODO.read()}\n</todo>",
+        })
+
+
 def agent_loop(messages: list, system: str, bg: BackgroundManager, tracker: TokenTracker = None):
-    rounds_since_task = 0
+    rounds_since_todo = 0
 
     while True:
         micro_compact(messages)
         if estimate_tokens(messages) > config.COMPACT_THRESHOLD:
             print("[auto_compact triggered]")
             messages[:] = auto_compact(messages)
+            _inject_todo(messages)
 
         # Drain background notifications
         notifs = bg.drain_notifications()
@@ -226,7 +237,7 @@ def agent_loop(messages: list, system: str, bg: BackgroundManager, tracker: Toke
 
         # Execute tools
         results = []
-        used_task_tool = False
+        used_todo_tool = False
         manual_compact = False
 
         for block in content_blocks:
@@ -253,15 +264,16 @@ def agent_loop(messages: list, system: str, bg: BackgroundManager, tracker: Toke
                     print(f"  {result_preview}")
                 results.append({"type": "tool_result", "tool_use_id": block.id, "content": str(output)})
 
-                if block.name in TASK_TOOL_NAMES:
-                    used_task_tool = True
+                if block.name in TODO_TOOL_NAMES:
+                    used_todo_tool = True
 
-        rounds_since_task = 0 if used_task_tool else rounds_since_task + 1
-        if rounds_since_task >= 3:
-            results.append({"type": "text", "text": "<reminder>Update your tasks.</reminder>"})
+        rounds_since_todo = 0 if used_todo_tool else rounds_since_todo + 1
+        if rounds_since_todo >= 5 and tools_mod.TODO and tools_mod.TODO.has_content:
+            results.append({"type": "text", "text": f"<todo>\n{tools_mod.TODO.read()}\n</todo>"})
 
         messages.append({"role": "user", "content": results})
 
         if manual_compact:
             print("[manual compact]")
             messages[:] = auto_compact(messages)
+            _inject_todo(messages)

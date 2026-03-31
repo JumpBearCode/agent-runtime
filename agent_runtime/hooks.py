@@ -101,8 +101,8 @@ class HookManager:
 class HumanConfirmHook(PreToolHook):
     """Ask the user to confirm before executing dangerous tools."""
 
-    AUTO_ALLOW = {"read_file", "task_create", "task_update", "task_list",
-                  "task_get", "load_skill", "check_background", "compact"}
+    AUTO_ALLOW = {"read_file", "todo_write", "todo_read",
+                  "load_skill", "check_background", "compact"}
 
     def __init__(self, auto_allow: set[str] | None = None):
         self.auto_allow = auto_allow if auto_allow is not None else self.AUTO_ALLOW

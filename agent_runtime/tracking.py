@@ -37,13 +37,10 @@ class TurnUsage:
         if not rates:
             # Fallback: use Sonnet pricing
             rates = PRICING["claude-sonnet-4-6"]
-        # cache_read and cache_creation are subsets of input_tokens
-        # Actual billed input = input_tokens - cache_read - cache_creation (at base rate)
-        #                     + cache_creation (at write rate)
-        #                     + cache_read (at read rate)
-        base_input = self.input_tokens - self.cache_read_input_tokens - self.cache_creation_input_tokens
+        # Anthropic API returns input_tokens as non-cached input only;
+        # cache_read and cache_creation are separate, additional counts.
         return (
-            base_input * rates["input"] / 1_000_000
+            self.input_tokens * rates["input"] / 1_000_000
             + self.cache_creation_input_tokens * rates["cache_write"] / 1_000_000
             + self.cache_read_input_tokens * rates["cache_read"] / 1_000_000
             + self.output_tokens * rates["output"] / 1_000_000

@@ -6,7 +6,7 @@ from pathlib import Path
 from . import config
 
 # Lazy references — these are set by __main__.py after initialization
-TASKS = None      # TaskManager instance
+TODO = None       # TodoManager instance
 SKILL_LOADER = None  # SkillLoader instance
 BG = None         # BackgroundManager instance
 MCP = None        # MCPManager instance
@@ -83,10 +83,8 @@ TOOL_HANDLERS = {
     "read_file":        lambda **kw: run_read(kw["path"], kw.get("limit")),
     "write_file":       lambda **kw: run_write(kw["path"], kw["content"]),
     "edit_file":        lambda **kw: run_edit(kw["path"], kw["old_text"], kw["new_text"]),
-    "task_create":      lambda **kw: TASKS.create(kw["subject"], kw.get("description", "")),
-    "task_update":      lambda **kw: TASKS.update(kw["task_id"], kw.get("status"), kw.get("addBlockedBy"), kw.get("addBlocks")),
-    "task_list":        lambda **kw: TASKS.list_all(),
-    "task_get":         lambda **kw: TASKS.get(kw["task_id"]),
+    "todo_write":       lambda **kw: TODO.write(kw["items"]),
+    "todo_read":        lambda **kw: TODO.read(),
     "load_skill":       lambda **kw: SKILL_LOADER.get_content(kw["name"]),
     "background_run":   lambda **kw: BG.run(kw["command"]),
     "check_background": lambda **kw: BG.check(kw.get("task_id")),
@@ -106,14 +104,10 @@ CHILD_TOOLS = [
 ]
 
 BUILTIN_TOOLS = CHILD_TOOLS + [
-    {"name": "task_create", "description": "Create a new task.",
-     "input_schema": {"type": "object", "properties": {"subject": {"type": "string"}, "description": {"type": "string"}}, "required": ["subject"]}},
-    {"name": "task_update", "description": "Update a task's status or dependencies.",
-     "input_schema": {"type": "object", "properties": {"task_id": {"type": "integer"}, "status": {"type": "string", "enum": ["pending", "in_progress", "completed"]}, "addBlockedBy": {"type": "array", "items": {"type": "integer"}}, "addBlocks": {"type": "array", "items": {"type": "integer"}}}, "required": ["task_id"]}},
-    {"name": "task_list", "description": "List all tasks with status summary.",
+    {"name": "todo_write", "description": "Write or replace the entire todo list. Use to plan multi-step work and track progress. State survives context compaction.",
+     "input_schema": {"type": "object", "properties": {"items": {"type": "array", "items": {"type": "object", "properties": {"id": {"type": "integer"}, "content": {"type": "string"}, "status": {"type": "string", "enum": ["pending", "in_progress", "completed"]}}, "required": ["id", "content", "status"]}}}, "required": ["items"]}},
+    {"name": "todo_read", "description": "Read the current todo list.",
      "input_schema": {"type": "object", "properties": {}}},
-    {"name": "task_get", "description": "Get full details of a task by ID.",
-     "input_schema": {"type": "object", "properties": {"task_id": {"type": "integer"}}, "required": ["task_id"]}},
     {"name": "load_skill", "description": "Load specialized knowledge by name.",
      "input_schema": {"type": "object", "properties": {"name": {"type": "string", "description": "Skill name to load"}}, "required": ["name"]}},
     {"name": "subagent", "description": "Spawn a subagent with fresh context. It shares the filesystem but not conversation history.",
