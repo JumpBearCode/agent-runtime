@@ -6,7 +6,7 @@ import sys
 from . import config
 from . import tools as tools_mod
 from .tools import TOOLS, dispatch_tool
-from .subagent import run_subagent
+
 from .compression import micro_compact, auto_compact, should_compact
 from .tracking import TokenTracker
 
@@ -62,7 +62,7 @@ Available MCP tools: {mcp_tools_list}
 {workspace_hint}
 Use todo_write to plan multi-step work and track progress. Update the todo list as you complete steps. Todo state survives compaction.
 Use load_skill to access specialized knowledge before tackling unfamiliar topics.
-Use subagent for isolated exploration.
+
 All file operations (read_file, write_file, edit_file) are restricted to the workspace directory.
 Prefer tools over prose.
 {mcp_section}
@@ -267,14 +267,7 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, sessio
                 if on_event:
                     on_event({"type": "tool_call", "id": block.id, "name": block.name,
                               "args": block.input, "args_summary": _format_args(block.name, block.input)})
-                if block.name == "subagent":
-                    desc = block.input.get("description", "subtask")
-                    print(f"\033[33m> subagent\033[0m  ({desc}) {block.input['prompt'][:80]}")
-                    try:
-                        output = run_subagent(block.input["prompt"])
-                    except Exception as e:
-                        output = f"Error: subagent failed: {e}"
-                elif block.name == "compact":
+                if block.name == "compact":
                     manual_compact = True
                     output = "Compressing..."
                 else:

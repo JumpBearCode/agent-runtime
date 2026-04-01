@@ -141,6 +141,4 @@ def _preview(name: str, args: dict) -> str:
         return f'  $ {args.get("command", "")[:80]}'
     if name in ("write_file", "edit_file"):
         return f'  {args.get("path", "")}'
-    if name == "subagent":
-        return f'  {args.get("description", "")[:60]}'
     return ""
