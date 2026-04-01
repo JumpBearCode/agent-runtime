@@ -391,16 +391,54 @@ function handleStreamEvent(event, els) {
             setTokenUsage(els.assistantEl, event.data);
             break;
 
+        case 'confirm_request':
+            handleConfirmRequest(event.data, els.toolsContainer);
+            break;
+
         case 'done':
             break;
 
-        case 'error':
+        case 'error': {
             const errEl = document.createElement('div');
             errEl.style.color = '#ef4444';
             errEl.textContent = `Error: ${event.data.message}`;
             els.assistantEl.appendChild(errEl);
             break;
+        }
     }
+}
+
+function handleConfirmRequest(data, toolsContainer) {
+    const el = document.createElement('div');
+    el.className = 'confirm-block';
+    const preview = data.preview ? ` ${data.preview}` : '';
+    el.innerHTML = `
+        <div class="confirm-prompt">
+            <span class="confirm-icon">?</span>
+            <span>Allow <strong>${escapeHtml(data.tool_name)}</strong>${escapeHtml(preview)}?</span>
+        </div>
+        <div class="confirm-actions">
+            <button class="confirm-btn allow" onclick="respondConfirm(this, true)">Allow</button>
+            <button class="confirm-btn deny" onclick="respondConfirm(this, false)">Deny</button>
+        </div>
+    `;
+    toolsContainer.appendChild(el);
+    scrollToBottom();
+}
+
+async function respondConfirm(btn, allowed) {
+    const block = btn.closest('.confirm-block');
+    const buttons = block.querySelectorAll('.confirm-btn');
+    buttons.forEach(b => b.disabled = true);
+    block.querySelector('.confirm-prompt').style.opacity = '0.6';
+    const label = allowed ? 'Allowed' : 'Denied';
+    const color = allowed ? '#22c55e' : '#ef4444';
+    block.querySelector('.confirm-actions').innerHTML = `<span style="color:${color};font-size:0.8rem;">${label}</span>`;
+    await fetch('/api/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ allowed }),
+    });
 }
 
 // Debounced markdown rendering (50ms)

@@ -429,6 +429,72 @@ details[open] .chevron-icon { transform: rotate(90deg); }
     border-radius: 4px;
 }
 
+/* --- Confirm Blocks --- */
+.confirm-block {
+    background: #fefce8;
+    border: 1px solid #fbbf24;
+    border-left: 3px solid #f59e0b;
+    border-radius: 8px;
+    padding: 0.6rem 0.75rem;
+    margin: 0.4rem 0;
+    font-size: 0.85rem;
+}
+
+.confirm-prompt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0.4rem;
+}
+
+.confirm-icon {
+    width: 20px;
+    height: 20px;
+    background: #f59e0b;
+    color: white;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+.confirm-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 28px;
+}
+
+.confirm-btn {
+    padding: 4px 16px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+}
+
+.confirm-btn.allow {
+    background: #22c55e;
+    color: white;
+    border-color: #16a34a;
+}
+
+.confirm-btn.allow:hover { background: #16a34a; }
+
+.confirm-btn.deny {
+    background: white;
+    color: #ef4444;
+    border-color: #ef4444;
+}
+
+.confirm-btn.deny:hover { background: #fef2f2; }
+
+.confirm-btn:disabled { opacity: 0.5; cursor: default; }
+
 /* --- Thinking Blocks --- */
 .thinking-block {
     position: relative;

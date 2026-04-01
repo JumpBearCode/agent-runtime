@@ -37,6 +37,17 @@ async def _stream_turn(engine: AgentEngine, session_id: str, query: str):
     try:
         with Live(console=console, refresh_per_second=12, transient=True) as live:
             async for event in engine.chat_stream(session_id, query):
+                if event.type == "confirm_request":
+                    # Pause Live display, ask user, resume
+                    live.stop()
+                    preview = event.preview or ""
+                    try:
+                        resp = input(f"  \033[35m? Allow {event.tool_name}{preview}? [Y/n]\033[0m ")
+                    except (EOFError, KeyboardInterrupt):
+                        resp = "n"
+                    engine.respond_confirm(resp.strip().lower() in ("", "y", "yes"))
+                    live.start()
+                    continue
                 state.handle_event(event)
                 live.update(create_streaming_display(state))
     except KeyboardInterrupt:

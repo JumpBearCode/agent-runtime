@@ -79,6 +79,14 @@ class Done(EngineEvent):
 
 
 @dataclass
+class ConfirmRequest(EngineEvent):
+    type: str = "confirm_request"
+    tool_name: str = ""
+    tool_args: dict = field(default_factory=dict)
+    preview: str = ""
+
+
+@dataclass
 class Error(EngineEvent):
     type: str = "error"
     message: str = ""

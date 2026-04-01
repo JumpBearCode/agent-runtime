@@ -1,6 +1,7 @@
 """Async engine wrapping agent_runtime's synchronous agent_loop."""
 
 import asyncio
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from dataclasses import dataclass
@@ -14,13 +15,13 @@ from agent_runtime.compression import auto_compact
 from agent_runtime.loop import agent_loop, build_system_prompt, _inject_todo
 from agent_runtime.mcp_client import MCPManager
 from agent_runtime.tracking import TokenTracker
-from agent_runtime.hooks import HookManager, HumanConfirmHook
+from agent_runtime.hooks import HookManager, HookResult, PreToolHook, _preview
 from agent_runtime.session import SessionStore
 from agent_runtime import tools as tools_mod
 
 from .schemas import (
     EngineEvent, TextDelta, ThinkingDelta, ThinkingStart, ThinkingStop, TextStop,
-    ToolCall, ToolResult, TokenUsage, Status, Done, Error,
+    ToolCall, ToolResult, TokenUsage, Status, Done, Error, ConfirmRequest,
 )
 
 
@@ -51,7 +52,41 @@ _EVENT_MAP = {
     "status": lambda d: Status(message=d.get("message", "")),
     "done": lambda d: Done(stop_reason=d.get("stop_reason", "")),
     "message_done": lambda d: Done(stop_reason=d.get("stop_reason", "")),
+    "confirm_request": lambda d: ConfirmRequest(
+        tool_name=d.get("tool_name", ""), tool_args=d.get("tool_args", {}),
+        preview=d.get("preview", "")),
 }
+
+
+class _EngineConfirmHook(PreToolHook):
+    """Confirm hook that bridges to the frontend via on_event + threading.Event."""
+
+    AUTO_ALLOW = {"read_file", "todo_write", "todo_read", "load_skill", "compact"}
+
+    def __init__(self, engine: "AgentEngine"):
+        self._engine = engine
+        self.reason = ""
+
+    def run(self, name: str, args: dict) -> HookResult:
+        if name in self.AUTO_ALLOW:
+            return HookResult.SKIP
+        preview = _preview(name, args)
+        # Send confirm_request through the on_event callback (set by chat_stream)
+        if self._engine._on_event:
+            self._engine._confirm_pending.clear()
+            self._engine._confirm_result = False
+            self._engine._on_event({
+                "type": "confirm_request",
+                "tool_name": name, "tool_args": args, "preview": preview,
+            })
+            # Block until frontend calls respond_confirm()
+            self._engine._confirm_pending.wait(timeout=300)
+            if self._engine._confirm_result:
+                return HookResult.ALLOW
+            self.reason = "User rejected"
+            return HookResult.DENY
+        # No event callback (shouldn't happen) — allow by default
+        return HookResult.ALLOW
 
 
 class AgentEngine:
@@ -72,8 +107,13 @@ class AgentEngine:
         self.hooks = HookManager()
         self.session_store = SessionStore()
 
+        # Confirm bridge state
+        self._confirm_pending = threading.Event()
+        self._confirm_result = False
+        self._on_event = None  # set per chat_stream call
+
         if cfg.confirm:
-            self.hooks.add(HumanConfirmHook())
+            self.hooks.add(_EngineConfirmHook(self))
 
         # Wire into tools module
         tools_mod.TODO = self.todo
@@ -143,6 +183,8 @@ class AgentEngine:
                 evt = factory(raw)
                 loop.call_soon_threadsafe(queue.put_nowait, evt)
 
+        self._on_event = on_event  # expose for EngineConfirmHook
+
         def _run_sync():
             try:
                 agent_loop(history, self.system, self.tracker,
@@ -179,6 +221,12 @@ class AgentEngine:
     def get_skills(self) -> list[dict]:
         return self.skill_loader.get_descriptions() if self.skill_loader else []
 
+    def respond_confirm(self, allowed: bool):
+        """Called by frontend when user responds to a confirm_request."""
+        self._confirm_result = allowed
+        self._confirm_pending.set()
+
     def shutdown(self):
+        self._on_event = None
         self.mcp.shutdown()
         self._executor.shutdown(wait=False)

@@ -122,6 +122,14 @@ async def chat(session_id: str, request: Request):
     return EventSourceResponse(event_stream())
 
 
+@app.post("/api/confirm")
+async def confirm(request: Request):
+    body = await request.json()
+    allowed = body.get("allowed", False)
+    get_engine().respond_confirm(allowed)
+    return {"status": "ok"}
+
+
 @app.get("/api/tools")
 async def list_tools():
     return get_engine().get_tools()
