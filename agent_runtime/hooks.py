@@ -141,4 +141,7 @@ def _preview(name: str, args: dict) -> str:
         return f'  $ {args.get("command", "")[:80]}'
     if name in ("write_file", "edit_file"):
         return f'  {args.get("path", "")}'
+    if 'snowflake' in name:
+        sql = args.get("sql", "") or args.get("table_name", "") or ""
+        return f"\n   {sql}" if sql else ""
     return ""

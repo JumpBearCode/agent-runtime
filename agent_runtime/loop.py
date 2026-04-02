@@ -53,8 +53,9 @@ def build_system_prompt(skill_loader, mcp_manager=None) -> str:
     if mcp_manager and mcp_manager.tool_names:
         mcp_tools_list = ", ".join(sorted(mcp_manager.tool_names))
         mcp_section = f"""
-MCP (Model Context Protocol) tools are available. ALWAYS prefer MCP tools over bash/curl for interacting with external services.
-For example, use mcp_github_* tools for ANY GitHub operations instead of curl/gh/git commands.
+MCP (Model Context Protocol) tools are available as NATIVE tool_use calls — call them exactly like bash, read_file, etc.
+Do NOT run MCP tools via bash. They are tool_use functions, not shell commands.
+ALWAYS prefer MCP tools over bash/curl for interacting with external services.
 Available MCP tools: {mcp_tools_list}
 """
 
