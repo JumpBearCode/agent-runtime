@@ -1,6 +1,7 @@
 """CLI entrypoint — argparse + REPL."""
 
 import argparse
+import re
 import signal
 from pathlib import Path
 
@@ -141,6 +142,11 @@ def main():
         print(f"  MCP tools: {len(mcp.tool_names)} from {len(mcp._servers)} server(s)")
     if args.confirm:
         print("  Confirm:   ON (dangerous tools require approval)")
+    if skill_loader.skills:
+        print(f"  Skills:    {len(skill_loader.skills)} available")
+        for name in skill_loader.skills:
+            desc = skill_loader.skills[name]["meta"].get("description", "")
+            print(f"             \033[34m/{name}\033[0m  {desc}")
     print("=" * 60)
     print("Multi-line input: end first line with \\ then blank line to submit.")
     print("Commands: /compact /todo  |  quit/exit to leave.\n")
@@ -162,6 +168,11 @@ def main():
                 print(todo.read())
                 print()
                 continue
+            # Inline skill expansion: scan for /skill-name anywhere in input
+            for match in re.findall(r'/([A-Za-z0-9_-]+)', query):
+                if match in skill_loader.skills:
+                    query = query.replace(f"/{match}", skill_loader.get_content(match), 1)
+                    print(f"\033[34m  loaded skill: {match}\033[0m")
             history.append({"role": "user", "content": query})
             session.save_turn(history[-1])
             try:

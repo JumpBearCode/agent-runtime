@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+import re
 import sys
 from pathlib import Path
 
@@ -95,6 +96,12 @@ def main():
         session_id = engine.create_session()
 
     console.print(_build_banner(engine.startup_info, session_id))
+    skill_names = engine.get_skill_names()
+    if skill_names:
+        console.print(f"  Skills ({len(skill_names)}):", style="bold")
+        for name, desc in skill_names.items():
+            console.print(f"    [blue]/{name}[/blue]  {desc}")
+        console.print()
     console.print("Multi-line input: end first line with \\ then blank line to submit.")
     console.print("Commands: /compact /todo /tools /skills /sessions  |  quit/exit to leave.\n")
 
@@ -181,6 +188,13 @@ def main():
                 else:
                     console.print("No sessions.", style="dim")
                 continue
+
+            # Inline skill expansion: scan for /skill-name anywhere in input
+            for match in re.findall(r'/([A-Za-z0-9_-]+)', query):
+                content = engine.get_skill_content(match)
+                if content is not None:
+                    query = query.replace(f"/{match}", content, 1)
+                    console.print(f"  [blue]loaded skill: {match}[/blue]")
 
             try:
                 asyncio.run(_stream_turn(engine, session_id, query))

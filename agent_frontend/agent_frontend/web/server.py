@@ -137,4 +137,18 @@ async def list_tools():
 
 @app.get("/api/skills")
 async def list_skills():
-    return get_engine().get_skills()
+    return get_engine().get_skill_names()
+
+
+@app.post("/api/sessions/{session_id}/skill/{skill_name}")
+async def invoke_skill(session_id: str, skill_name: str):
+    engine = get_engine()
+    content = engine.get_skill_content(skill_name)
+    if content is None:
+        return JSONResponse({"error": f"Unknown skill: {skill_name}"}, status_code=404)
+
+    async def event_stream():
+        async for event in engine.chat_stream(session_id, content):
+            yield {"event": event.type, "data": json.dumps(event.to_dict(), ensure_ascii=False)}
+
+    return EventSourceResponse(event_stream())

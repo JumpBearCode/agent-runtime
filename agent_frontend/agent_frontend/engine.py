@@ -218,8 +218,23 @@ class AgentEngine:
         from agent_runtime.tools import TOOLS
         return [t["name"] for t in TOOLS]
 
-    def get_skills(self) -> list[dict]:
-        return self.skill_loader.get_descriptions() if self.skill_loader else []
+    def get_skills(self) -> str:
+        return self.skill_loader.get_descriptions() if self.skill_loader else ""
+
+    def get_skill_names(self) -> dict[str, str]:
+        """Return {name: description} for all loaded skills."""
+        if not self.skill_loader:
+            return {}
+        return {
+            name: skill["meta"].get("description", "")
+            for name, skill in self.skill_loader.skills.items()
+        }
+
+    def get_skill_content(self, name: str) -> str | None:
+        """Return skill content if name is valid, else None."""
+        if self.skill_loader and name in self.skill_loader.skills:
+            return self.skill_loader.get_content(name)
+        return None
 
     def respond_confirm(self, allowed: bool):
         """Called by frontend when user responds to a confirm_request."""
