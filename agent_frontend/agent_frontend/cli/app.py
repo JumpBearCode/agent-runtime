@@ -24,8 +24,6 @@ def _build_banner(info: dict, session_id: str) -> Panel:
     lines.append(f"Workspace: {info['workspace']}")
     lines.append(f"Session:   {session_id}")
     lines.append(f"Model:     {info['model']}")
-    if info.get("sandbox_enabled"):
-        lines.append(f"Sandbox:   Docker ({info['sandbox_mode']})")
     if info.get("thinking"):
         lines.append(f"Thinking:  ON (budget: {info['thinking_budget']} tokens)")
     if info.get("mcp_tool_count"):
@@ -64,7 +62,6 @@ def main():
     parser.add_argument("--thinking-budget", type=int, default=10000, help="Max tokens for thinking")
     parser.add_argument("--mcp-config", default=None, help="Path to MCP config JSON")
     parser.add_argument("--confirm", action="store_true", default=False, help="Enable confirmation for dangerous tools")
-    parser.add_argument("--keep-sandbox", action="store_true", default=False, help="Keep sandbox after exit")
     parser.add_argument("--session", "-s", default=None, help="Session ID to resume")
     parser.add_argument("--list-sessions", action="store_true", default=False, help="List sessions and exit")
     args = parser.parse_args()
@@ -75,7 +72,6 @@ def main():
         thinking_budget=args.thinking_budget,
         mcp_config=args.mcp_config,
         confirm=args.confirm,
-        keep_sandbox=args.keep_sandbox,
     )
     engine = AgentEngine(cfg)
 

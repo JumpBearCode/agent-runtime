@@ -35,19 +35,7 @@ def _format_args(tool_name: str, args: dict) -> str:
 
 def build_system_prompt(skill_loader, mcp_manager=None) -> str:
     skills = skill_loader.get_descriptions() if skill_loader else "(no skills available)"
-    if config.SANDBOX_ENABLED:
-        sandbox_note = " (sandboxed via Docker)"
-        workdir = "/workspace"
-        workspace_hint = (
-            "/workspace is the project root directory (mounted from the host). "
-            "Initialize and create all project files directly under /workspace — "
-            "do NOT create a nested subdirectory with the project name. "
-            "Use /workspace as your working directory for all operations."
-        )
-    else:
-        sandbox_note = ""
-        workdir = str(config.WORKDIR)
-        workspace_hint = ""
+    workdir = str(config.WORKDIR)
 
     mcp_section = ""
     if mcp_manager and mcp_manager.tool_names:
@@ -59,8 +47,7 @@ ALWAYS prefer MCP tools over bash/curl for interacting with external services.
 Available MCP tools: {mcp_tools_list}
 """
 
-    return f"""You are a coding agent at {workdir}.{sandbox_note}
-{workspace_hint}
+    return f"""You are a coding agent at {workdir}.
 Use todo_write to plan multi-step work and track progress. Update the todo list as you complete steps. Todo state survives compaction.
 Use load_skill to access specialized knowledge before tackling unfamiliar topics.
 

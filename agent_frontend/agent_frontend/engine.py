@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from typing import AsyncGenerator, Optional
 
 from agent_runtime import config
-from agent_runtime.sandbox import setup_workspace
 from agent_runtime.todo import Todo
 from agent_runtime.skills import SkillLoader
 from agent_runtime.compression import auto_compact
@@ -32,7 +31,6 @@ class EngineConfig:
     thinking_budget: int = 10000
     mcp_config: Optional[str] = None
     confirm: bool = False
-    keep_sandbox: bool = False
 
 
 # Map raw event dict from loop.py on_event callback -> EngineEvent dataclass
@@ -92,9 +90,11 @@ class AgentEngine:
     """Wraps agent_runtime for use by CLI and Web frontends."""
 
     def __init__(self, cfg: EngineConfig):
-        if cfg.keep_sandbox:
-            config.SANDBOX_MODE = "persistent"
-        setup_workspace(cfg.workspace)
+        if cfg.workspace:
+            ws = Path(cfg.workspace).resolve() if cfg.workspace != "." else Path.cwd()
+            if not ws.exists():
+                ws.mkdir(parents=True)
+            config.WORKDIR = ws
 
         config.THINKING_ENABLED = cfg.thinking
         config.THINKING_BUDGET = cfg.thinking_budget
@@ -140,8 +140,6 @@ class AgentEngine:
         return {
             "workspace": str(config.WORKDIR),
             "model": config.MODEL,
-            "sandbox_enabled": config.SANDBOX_ENABLED,
-            "sandbox_mode": config.SANDBOX_MODE if config.SANDBOX_ENABLED else None,
             "thinking": config.THINKING_ENABLED,
             "thinking_budget": config.THINKING_BUDGET if config.THINKING_ENABLED else None,
             "mcp_tool_count": len(self.mcp.tool_names),

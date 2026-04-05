@@ -2,11 +2,9 @@
 
 import argparse
 import re
-import signal
 from pathlib import Path
 
 from . import config
-from .sandbox import setup_workspace, teardown_sandbox
 from .todo import Todo
 from .skills import SkillLoader
 from .compression import auto_compact
@@ -42,8 +40,7 @@ def main():
     parser = argparse.ArgumentParser(description="Agent runtime")
     parser.add_argument(
         "--workspace", "-w", default=None,
-        help="Workspace directory. '.' for cwd. Enables Docker sandbox if available. "
-             "If omitted, runs without sandbox.",
+        help="Workspace directory (default: cwd). Agent file operations are restricted to this path.",
     )
     parser.add_argument(
         "--thinking", "-t", action="store_true", default=False,
@@ -62,26 +59,18 @@ def main():
         help="Enable human-in-the-loop confirmation for dangerous tool calls.",
     )
     parser.add_argument(
-        "--keep-sandbox", action="store_true", default=False,
-        help="Keep sandbox container running after exit (default: remove on exit).",
-    )
-    parser.add_argument(
         "--session", "-s", default=None,
         help="Session ID to resume. If omitted, starts a new session.",
     )
     args = parser.parse_args()
 
-    # Initialize workspace + sandbox
-    if args.keep_sandbox:
-        config.SANDBOX_MODE = "persistent"
-    setup_workspace(args.workspace)
-
-    # Register signal handlers so ephemeral sandbox gets cleaned up on SIGTERM/SIGINT
-    if config.SANDBOX_ENABLED and config.SANDBOX_MODE == "ephemeral":
-        def _signal_cleanup(signum, frame):
-            teardown_sandbox()
-            raise SystemExit(1)
-        signal.signal(signal.SIGTERM, _signal_cleanup)
+    # Workspace
+    if args.workspace:
+        ws = Path(args.workspace).resolve() if args.workspace != "." else Path.cwd()
+        if not ws.exists():
+            ws.mkdir(parents=True)
+            print(f"  Created workspace: {ws}")
+        config.WORKDIR = ws
 
     # Thinking config
     config.THINKING_ENABLED = args.thinking
@@ -128,15 +117,6 @@ def main():
     print("=" * 60)
     print(f"  Workspace: {config.WORKDIR}")
     print(f"  Session:   {session.session_id}")
-    if config.SANDBOX_ENABLED:
-        mode_label = "ephemeral" if config.SANDBOX_MODE == "ephemeral" else "persistent"
-        print(f"  Sandbox:   Docker ({config.CONTAINER_NAME}, {mode_label})")
-    else:
-        if args.workspace is None:
-            print("  \033[33mSandbox:   OFF — bash can escape safe_path.\033[0m")
-            print("  \033[33m           Use --workspace <dir> to enable Docker sandbox.\033[0m")
-        else:
-            print("  \033[33mSandbox:   OFF (Docker not available)\033[0m")
     print(f"  Model:     {config.MODEL}")
     if config.THINKING_ENABLED:
         print(f"  Thinking:  ON (budget: {config.THINKING_BUDGET} tokens)")
@@ -200,8 +180,6 @@ def main():
         if tracker.turn_count > 0:
             print(f"\n{tracker.format_total(config.MODEL)}")
         mcp.shutdown()
-        if config.SANDBOX_ENABLED and config.SANDBOX_MODE == "ephemeral":
-            teardown_sandbox()
 
 
 if __name__ == "__main__":

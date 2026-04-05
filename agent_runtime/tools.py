@@ -13,11 +13,6 @@ HOOKS = None      # HookManager instance
 
 
 def safe_path(p: str) -> Path:
-    # When sandbox is enabled, the model sees /workspace as root.
-    # Translate /workspace/... paths to the host WORKDIR equivalent.
-    if config.SANDBOX_ENABLED and p.startswith("/workspace"):
-        p = p[len("/workspace"):]          # strip prefix
-        p = p.lstrip("/") if p else "."    # "/workspace/foo" → "foo", "/workspace" → "."
     path = (config.WORKDIR / p).resolve()
     if not path.is_relative_to(config.WORKDIR):
         raise ValueError(f"Path escapes workspace: {p}")
@@ -29,15 +24,8 @@ def run_bash(command: str) -> str:
     if any(d in command for d in dangerous):
         return "Error: Dangerous command blocked"
     try:
-        if config.SANDBOX_ENABLED:
-            r = subprocess.run(
-                ["docker", "exec", "--workdir", "/workspace",
-                 config.CONTAINER_NAME, "bash", "-c", command],
-                capture_output=True, text=True, timeout=120,
-            )
-        else:
-            r = subprocess.run(command, shell=True, cwd=config.WORKDIR,
-                               capture_output=True, text=True, timeout=120)
+        r = subprocess.run(command, shell=True, cwd=config.WORKDIR,
+                           capture_output=True, text=True, timeout=120)
         out = (r.stdout + r.stderr).strip()
         return out[:50000] if out else "(no output)"
     except subprocess.TimeoutExpired:

@@ -29,12 +29,8 @@ def _create_client():
 client = _create_client()
 MODEL = os.environ["MODEL_ID"]
 
-# Set by _setup_workspace() at startup
+# Set at startup
 WORKDIR = Path.cwd()
-SANDBOX_ENABLED = False
-SANDBOX_MODE = "ephemeral"  # "ephemeral" (remove on exit) or "persistent" (keep running)
-CONTAINER_NAME = "agent-sandbox"
-SANDBOX_IMAGE = "agent-sandbox"
 
 # Compression settings
 COMPACT_THRESHOLD = 50000
