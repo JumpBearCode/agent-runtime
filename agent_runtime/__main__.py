@@ -11,7 +11,7 @@ from .compression import auto_compact
 from .loop import agent_loop, build_system_prompt, _inject_todo
 from .mcp_client import MCPManager
 from .tracking import TokenTracker
-from .hooks import HookManager, HumanConfirmHook, load_confirm_tools
+from .hooks import HookManager, HumanConfirmHook, validate_hitl
 from .session import SessionStore
 from . import tools as tools_mod
 
@@ -51,8 +51,8 @@ def main():
         help="Max tokens for thinking per turn (default: 10000).",
     )
     parser.add_argument(
-        "--mcp-config", default=None,
-        help="Path to MCP config JSON file (default: looks for mcp.json in workspace).",
+        "--settings", default=None,
+        help="Path to settings folder (overrides project and user-level .agent_settings).",
     )
     parser.add_argument(
         "--confirm", action="store_true", default=False,
@@ -72,9 +72,11 @@ def main():
             print(f"  Created workspace: {ws}")
         config.WORKDIR = ws
 
-    # Thinking config
+    # Config
     config.THINKING_ENABLED = args.thinking
     config.THINKING_BUDGET = args.thinking_budget
+    config.SETTINGS_OVERRIDE = args.settings
+    config.CONFIRM = args.confirm
 
     # Initialize managers
     todo = Todo()
@@ -90,17 +92,16 @@ def main():
     tools_mod.MCP = mcp
     tools_mod.HOOKS = hooks
 
-    # MCP: load config and connect to servers
-    mcp_config_path = Path(args.mcp_config) if args.mcp_config else config.WORKDIR / "mcp.json"
-    mcp_config = mcp.load_config(mcp_config_path)
-    if mcp_config.get("servers"):
+    # MCP: resolve from settings layers and connect
+    mcp_cfg = config.resolve_mcp_config()
+    if mcp_cfg.get("servers"):
         print("  MCP servers:")
-        mcp.start(mcp_config)
+        mcp.start(mcp_cfg)
         tools_mod.rebuild_tools()
 
     # Confirm hook — after MCP so TOOLS is fully populated for validation
-    if args.confirm:
-        confirm_set = load_confirm_tools(config.WORKDIR / "HITL.json")
+    if config.CONFIRM:
+        confirm_set = validate_hitl(config.resolve_hitl())
         hooks.add(HumanConfirmHook(confirm_tools=confirm_set))
 
     system = build_system_prompt(skill_loader, mcp_manager=mcp)
@@ -122,7 +123,7 @@ def main():
         print(f"  Thinking:  ON (budget: {config.THINKING_BUDGET} tokens)")
     if mcp.tool_names:
         print(f"  MCP tools: {len(mcp.tool_names)} from {len(mcp._servers)} server(s)")
-    if args.confirm:
+    if config.CONFIRM:
         print("  Confirm:   ON (dangerous tools require approval)")
     if skill_loader.skills:
         print(f"  Skills:    {len(skill_loader.skills)} available")

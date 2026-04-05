@@ -60,7 +60,7 @@ def main():
     parser.add_argument("--workspace", "-w", default=None, help="Workspace directory")
     parser.add_argument("--thinking", "-t", action="store_true", default=False, help="Enable extended thinking")
     parser.add_argument("--thinking-budget", type=int, default=10000, help="Max tokens for thinking")
-    parser.add_argument("--mcp-config", default=None, help="Path to MCP config JSON")
+    parser.add_argument("--settings", default=None, help="Path to settings folder (overrides .agent_settings)")
     parser.add_argument("--confirm", action="store_true", default=False, help="Enable confirmation for dangerous tools")
     parser.add_argument("--session", "-s", default=None, help="Session ID to resume")
     parser.add_argument("--list-sessions", action="store_true", default=False, help="List sessions and exit")
@@ -70,7 +70,7 @@ def main():
         workspace=args.workspace,
         thinking=args.thinking,
         thinking_budget=args.thinking_budget,
-        mcp_config=args.mcp_config,
+        settings=args.settings,
         confirm=args.confirm,
     )
     engine = AgentEngine(cfg)

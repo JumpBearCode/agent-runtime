@@ -1,13 +1,14 @@
 """FastAPI backend — API routes and SSE streaming."""
 
 import json
-import os
 from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from sse_starlette.sse import EventSourceResponse
+
+from agent_runtime import config
 
 app = FastAPI(title="Agent Frontend")
 
@@ -23,11 +24,11 @@ def get_engine():
     if _engine is None:
         from agent_frontend.engine import AgentEngine, EngineConfig
         _engine = AgentEngine(EngineConfig(
-            workspace=os.environ.get("AGENT_WORKSPACE", "."),
-            thinking="AGENT_THINKING" in os.environ,
-            thinking_budget=int(os.environ.get("AGENT_THINKING_BUDGET", "10000")),
-            mcp_config=os.environ.get("AGENT_MCP_CONFIG"),
-            confirm="AGENT_CONFIRM" in os.environ,
+            workspace=str(config.WORKDIR),
+            thinking=config.THINKING_ENABLED,
+            thinking_budget=config.THINKING_BUDGET,
+            settings=config.SETTINGS_OVERRIDE,
+            confirm=config.CONFIRM,
         ))
     return _engine
 

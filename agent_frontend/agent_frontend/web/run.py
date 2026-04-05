@@ -1,7 +1,9 @@
 """Web UI launcher — argparse + uvicorn."""
 
 import argparse
-import os
+from pathlib import Path
+
+from agent_runtime import config
 
 
 def main():
@@ -11,18 +13,19 @@ def main():
     parser.add_argument("--workspace", "-w", default=".", help="Workspace directory")
     parser.add_argument("--thinking", "-t", action="store_true", default=False, help="Enable extended thinking")
     parser.add_argument("--thinking-budget", type=int, default=10000, help="Max tokens for thinking")
-    parser.add_argument("--mcp-config", default=None, help="Path to MCP config JSON")
+    parser.add_argument("--settings", default=None, help="Path to settings folder (overrides .agent_settings)")
     parser.add_argument("--confirm", action="store_true", default=False, help="Enable confirmation for dangerous tools")
     args = parser.parse_args()
 
-    os.environ["AGENT_WORKSPACE"] = args.workspace or "."
-    if args.thinking:
-        os.environ["AGENT_THINKING"] = "1"
-        os.environ["AGENT_THINKING_BUDGET"] = str(args.thinking_budget)
-    if args.mcp_config:
-        os.environ["AGENT_MCP_CONFIG"] = args.mcp_config
-    if args.confirm:
-        os.environ["AGENT_CONFIRM"] = "1"
+    # Set config directly — same process, no need for os.environ
+    ws = Path(args.workspace).resolve() if args.workspace != "." else Path.cwd()
+    if not ws.exists():
+        ws.mkdir(parents=True)
+    config.WORKDIR = ws
+    config.THINKING_ENABLED = args.thinking
+    config.THINKING_BUDGET = args.thinking_budget
+    config.SETTINGS_OVERRIDE = args.settings
+    config.CONFIRM = args.confirm
 
     import uvicorn
     uvicorn.run("agent_frontend.web.server:app",

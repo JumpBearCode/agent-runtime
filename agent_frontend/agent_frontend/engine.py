@@ -14,7 +14,7 @@ from agent_runtime.compression import auto_compact
 from agent_runtime.loop import agent_loop, build_system_prompt, _inject_todo
 from agent_runtime.mcp_client import MCPManager
 from agent_runtime.tracking import TokenTracker
-from agent_runtime.hooks import HookManager, HookResult, PreToolHook, _preview, load_confirm_tools
+from agent_runtime.hooks import HookManager, HookResult, PreToolHook, _preview, validate_hitl
 from agent_runtime.session import SessionStore
 from agent_runtime import tools as tools_mod
 
@@ -29,8 +29,20 @@ class EngineConfig:
     workspace: Optional[str] = None
     thinking: bool = False
     thinking_budget: int = 10000
-    mcp_config: Optional[str] = None
+    settings: Optional[str] = None
     confirm: bool = False
+
+    def apply(self):
+        """Push values to the global config module."""
+        if self.workspace:
+            ws = Path(self.workspace).resolve() if self.workspace != "." else Path.cwd()
+            if not ws.exists():
+                ws.mkdir(parents=True)
+            config.WORKDIR = ws
+        config.THINKING_ENABLED = self.thinking
+        config.THINKING_BUDGET = self.thinking_budget
+        config.SETTINGS_OVERRIDE = self.settings
+        config.CONFIRM = self.confirm
 
 
 # Map raw event dict from loop.py on_event callback -> EngineEvent dataclass
@@ -90,14 +102,7 @@ class AgentEngine:
     """Wraps agent_runtime for use by CLI and Web frontends."""
 
     def __init__(self, cfg: EngineConfig):
-        if cfg.workspace:
-            ws = Path(cfg.workspace).resolve() if cfg.workspace != "." else Path.cwd()
-            if not ws.exists():
-                ws.mkdir(parents=True)
-            config.WORKDIR = ws
-
-        config.THINKING_ENABLED = cfg.thinking
-        config.THINKING_BUDGET = cfg.thinking_budget
+        cfg.apply()
 
         self.todo = Todo()
         self.skill_loader = SkillLoader(config.WORKDIR / "skills")
@@ -117,16 +122,15 @@ class AgentEngine:
         tools_mod.MCP = self.mcp
         tools_mod.HOOKS = self.hooks
 
-        # MCP
-        mcp_path = Path(cfg.mcp_config) if cfg.mcp_config else config.WORKDIR / "mcp.json"
-        mcp_cfg = self.mcp.load_config(mcp_path)
+        # MCP: resolve from settings layers and connect
+        mcp_cfg = config.resolve_mcp_config()
         if mcp_cfg.get("servers"):
             self.mcp.start(mcp_cfg)
             tools_mod.rebuild_tools()
 
         # Confirm hook — after MCP so TOOLS is fully populated for validation
-        if cfg.confirm:
-            confirm_set = load_confirm_tools(config.WORKDIR / "HITL.json")
+        if config.CONFIRM:
+            confirm_set = validate_hitl(config.resolve_hitl())
             self.hooks.add(_EngineConfirmHook(self, confirm_tools=confirm_set))
 
         self.system = build_system_prompt(self.skill_loader, mcp_manager=self.mcp)
