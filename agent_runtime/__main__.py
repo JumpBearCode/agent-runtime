@@ -13,7 +13,7 @@ from .compression import auto_compact
 from .loop import agent_loop, build_system_prompt, _inject_todo
 from .mcp_client import MCPManager
 from .tracking import TokenTracker
-from .hooks import HookManager, HumanConfirmHook
+from .hooks import HookManager, HumanConfirmHook, load_confirm_tools
 from .session import SessionStore
 from . import tools as tools_mod
 
@@ -95,9 +95,6 @@ def main():
     hooks = HookManager()
     session = SessionStore()
 
-    if args.confirm:
-        hooks.add(HumanConfirmHook())
-
     # Wire managers into tools module
     tools_mod.TODO = todo
     tools_mod.SKILL_LOADER = skill_loader
@@ -111,6 +108,11 @@ def main():
         print("  MCP servers:")
         mcp.start(mcp_config)
         tools_mod.rebuild_tools()
+
+    # Confirm hook — after MCP so TOOLS is fully populated for validation
+    if args.confirm:
+        confirm_set = load_confirm_tools(config.WORKDIR / "HITL.json")
+        hooks.add(HumanConfirmHook(confirm_tools=confirm_set))
 
     system = build_system_prompt(skill_loader, mcp_manager=mcp)
 

@@ -22,8 +22,13 @@ Usage:
 from __future__ import annotations
 
 import fnmatch
+import json
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class HookResult(Enum):
@@ -101,15 +106,12 @@ class HookManager:
 class HumanConfirmHook(PreToolHook):
     """Ask the user to confirm before executing dangerous tools."""
 
-    AUTO_ALLOW = {"read_file", "todo_write", "todo_read",
-                  "load_skill", "compact"}
-
-    def __init__(self, auto_allow: set[str] | None = None):
-        self.auto_allow = auto_allow if auto_allow is not None else self.AUTO_ALLOW
+    def __init__(self, confirm_tools: set[str]):
+        self.confirm_tools = confirm_tools
         self.reason = ""
 
     def run(self, name: str, args: dict) -> HookResult:
-        if name in self.auto_allow:
+        if name not in self.confirm_tools:
             return HookResult.SKIP
         # Show what's about to happen
         preview = _preview(name, args)
@@ -133,6 +135,29 @@ class LogHook(PreToolHook):
     def run(self, name: str, args: dict) -> HookResult:
         self.log.append({"tool": name, "args": args})
         return HookResult.SKIP
+
+
+def load_confirm_tools(path: Path) -> set[str]:
+    """Load tool names that require HITL confirmation from JSON."""
+    from .tools import TOOLS
+    try:
+        data = json.loads(path.read_text())
+    except FileNotFoundError:
+        return set()
+    except json.JSONDecodeError as e:
+        logger.warning("HITL.json: invalid JSON — %s", e)
+        return set()
+    if not isinstance(data, list):
+        logger.warning("HITL.json: expected a JSON array, got %s", type(data).__name__)
+        return set()
+    valid_names = {t["name"] for t in TOOLS}
+    result = set()
+    for name in data:
+        if name not in valid_names:
+            logger.warning("HITL.json: '%s' is not a known tool, skipping", name)
+        else:
+            result.add(name)
+    return result
 
 
 def _preview(name: str, args: dict) -> str:

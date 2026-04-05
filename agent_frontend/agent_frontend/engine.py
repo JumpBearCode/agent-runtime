@@ -15,7 +15,7 @@ from agent_runtime.compression import auto_compact
 from agent_runtime.loop import agent_loop, build_system_prompt, _inject_todo
 from agent_runtime.mcp_client import MCPManager
 from agent_runtime.tracking import TokenTracker
-from agent_runtime.hooks import HookManager, HookResult, PreToolHook, _preview
+from agent_runtime.hooks import HookManager, HookResult, PreToolHook, _preview, load_confirm_tools
 from agent_runtime.session import SessionStore
 from agent_runtime import tools as tools_mod
 
@@ -61,14 +61,13 @@ _EVENT_MAP = {
 class _EngineConfirmHook(PreToolHook):
     """Confirm hook that bridges to the frontend via on_event + threading.Event."""
 
-    AUTO_ALLOW = {"read_file", "todo_write", "todo_read", "load_skill", "compact"}
-
-    def __init__(self, engine: "AgentEngine"):
+    def __init__(self, engine: "AgentEngine", confirm_tools: set[str]):
         self._engine = engine
+        self.confirm_tools = confirm_tools
         self.reason = ""
 
     def run(self, name: str, args: dict) -> HookResult:
-        if name in self.AUTO_ALLOW:
+        if name not in self.confirm_tools:
             return HookResult.SKIP
         preview = _preview(name, args)
         # Send confirm_request through the on_event callback (set by chat_stream)
@@ -112,9 +111,6 @@ class AgentEngine:
         self._confirm_result = False
         self._on_event = None  # set per chat_stream call
 
-        if cfg.confirm:
-            self.hooks.add(_EngineConfirmHook(self))
-
         # Wire into tools module
         tools_mod.TODO = self.todo
         tools_mod.SKILL_LOADER = self.skill_loader
@@ -127,6 +123,11 @@ class AgentEngine:
         if mcp_cfg.get("servers"):
             self.mcp.start(mcp_cfg)
             tools_mod.rebuild_tools()
+
+        # Confirm hook — after MCP so TOOLS is fully populated for validation
+        if cfg.confirm:
+            confirm_set = load_confirm_tools(config.WORKDIR / "HITL.json")
+            self.hooks.add(_EngineConfirmHook(self, confirm_tools=confirm_set))
 
         self.system = build_system_prompt(self.skill_loader, mcp_manager=self.mcp)
 
