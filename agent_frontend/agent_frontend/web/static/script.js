@@ -189,7 +189,6 @@ function createAssistantMessageEl() {
         <div class="thinking-block" style="display:none;"></div>
         <div class="tools-container"></div>
         <div class="response-content streaming-cursor"></div>
-        <div class="token-usage" style="display:none;"></div>
     `;
     container.appendChild(el);
     return el;
@@ -248,18 +247,21 @@ function toggleToolResult(trigger) {
     }
 }
 
-function setTokenUsage(assistantEl, data) {
-    const el = assistantEl.querySelector('.token-usage');
-    if (!el) return;
-    const turn = data.turn || {};
-    const inp = (turn.input || 0) + (turn.cache_creation || 0) + (turn.cache_read || 0);
-    const out = turn.output || 0;
-    const cached = turn.cache_read || 0;
-    let text = `in:${inp.toLocaleString()} out:${out.toLocaleString()}`;
-    if (cached) text += ` cached:${cached.toLocaleString()}`;
-    if (data.cost) text += ` ${data.cost}`;
-    el.textContent = text;
-    el.style.display = 'block';
+function setTokenUsage(toolsContainer, data) {
+    if (!toolsContainer) return;
+
+    const total = data.total || {};
+    const totIn  = (total.input || 0) + (total.cache_creation || 0) + (total.cache_read || 0);
+    const totOut = total.output || 0;
+
+    let text = data.cost || '';
+    text += `  ·  total in:${totIn.toLocaleString()} out:${totOut.toLocaleString()}`;
+    if (typeof total.cost === 'number') text += ` $${total.cost.toFixed(4)}`;
+
+    const line = document.createElement('div');
+    line.className = 'token-usage-line';
+    line.textContent = text;
+    toolsContainer.appendChild(line);
 }
 
 function finalizeAssistantMessage(assistantEl) {
@@ -273,29 +275,31 @@ function finalizeAssistantMessage(assistantEl) {
 // SSE Streaming
 // ============================================================
 function parseSSE(buffer) {
+    // SSE events are terminated by a blank line ("\n\n"). Only process
+    // fully-received events; keep any trailing partial event as `remaining`
+    // so it can be concatenated with the next network chunk. The previous
+    // line-by-line parser couldn't distinguish a partial line at the end of
+    // a chunk from a complete line, which silently dropped large events
+    // (e.g. todo_write with long Chinese payloads) when they straddled a
+    // chunk boundary.
     const events = [];
-    const lines = buffer.split('\n');
-    let remaining = '';
-    let currentEvent = null;
-    let currentData = '';
+    const parts = buffer.split('\n\n');
+    const remaining = parts.pop() ?? '';
 
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        if (line.startsWith('event: ')) {
-            currentEvent = line.slice(7).trim();
-        } else if (line.startsWith('data: ')) {
-            currentData = line.slice(6);
-        } else if (line === '' && currentEvent) {
-            try {
-                events.push({ type: currentEvent, data: JSON.parse(currentData) });
-            } catch(e) {}
-            currentEvent = null;
-            currentData = '';
+    for (const raw of parts) {
+        if (!raw) continue;
+        let eventType = 'message';
+        let dataStr = '';
+        for (const line of raw.split('\n')) {
+            if (line.startsWith('event: ')) {
+                eventType = line.slice(7).trim();
+            } else if (line.startsWith('data: ')) {
+                dataStr += (dataStr ? '\n' : '') + line.slice(6);
+            }
         }
-    }
-    if (currentEvent) {
-        remaining = `event: ${currentEvent}\n`;
-        if (currentData) remaining += `data: ${currentData}\n`;
+        try {
+            events.push({ type: eventType, data: JSON.parse(dataStr) });
+        } catch (e) {}
     }
     return { parsed: events, remaining };
 }
@@ -388,7 +392,7 @@ function handleStreamEvent(event, els) {
             break;
 
         case 'token_usage':
-            setTokenUsage(els.assistantEl, event.data);
+            setTokenUsage(els.toolsContainer, event.data);
             break;
 
         case 'confirm_request':

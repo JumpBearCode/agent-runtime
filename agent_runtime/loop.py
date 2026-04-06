@@ -232,7 +232,11 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, sessio
                           "turn": {"input": turn.input_tokens, "output": turn.output_tokens,
                                    "cache_creation": turn.cache_creation_input_tokens,
                                    "cache_read": turn.cache_read_input_tokens},
-                          "total": {"input": tracker.total.input_tokens, "output": tracker.total.output_tokens},
+                          "total": {"input": tracker.total.input_tokens,
+                                    "output": tracker.total.output_tokens,
+                                    "cache_creation": tracker.total.cache_creation_input_tokens,
+                                    "cache_read": tracker.total.cache_read_input_tokens,
+                                    "cost": tracker.total.cost(config.MODEL)},
                           "cost": tracker.format_turn(turn, config.MODEL)})
 
         # Append full assistant message (including thinking blocks for context)
