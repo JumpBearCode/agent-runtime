@@ -39,7 +39,7 @@ async def index():
 
 
 @app.get("/api/config")
-async def config():
+async def get_config():
     return get_engine().startup_info
 
 
