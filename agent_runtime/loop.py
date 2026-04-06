@@ -223,21 +223,27 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, sessio
         # Stream the response (text/thinking printed live)
         content_blocks, stop_reason, usage = _stream_response(system, messages, on_event=on_event)
 
-        # Track token usage
+        # Track token usage. Build the event payload now but defer emission to
+        # end-of-round (after tool execution) so the frontend can render it
+        # after that round's tool blocks instead of before them. CLI terminal
+        # print stays at its original position to preserve existing CLI output.
+        token_event = None
         if tracker and usage:
             turn = tracker.record(usage)
             print(f"\033[2m  [{tracker.format_turn(turn, config.MODEL)}]\033[0m")
             if on_event:
-                on_event({"type": "token_usage",
-                          "turn": {"input": turn.input_tokens, "output": turn.output_tokens,
-                                   "cache_creation": turn.cache_creation_input_tokens,
-                                   "cache_read": turn.cache_read_input_tokens},
-                          "total": {"input": tracker.total.input_tokens,
-                                    "output": tracker.total.output_tokens,
-                                    "cache_creation": tracker.total.cache_creation_input_tokens,
-                                    "cache_read": tracker.total.cache_read_input_tokens,
-                                    "cost": tracker.total.cost(config.MODEL)},
-                          "cost": tracker.format_turn(turn, config.MODEL)})
+                token_event = {"type": "token_usage",
+                               "turn": {"input": turn.input_tokens,
+                                        "output": turn.output_tokens,
+                                        "cache_creation": turn.cache_creation_input_tokens,
+                                        "cache_read": turn.cache_read_input_tokens,
+                                        "cost": turn.cost(config.MODEL)},
+                               "total": {"input": tracker.total.input_tokens,
+                                         "output": tracker.total.output_tokens,
+                                         "cache_creation": tracker.total.cache_creation_input_tokens,
+                                         "cache_read": tracker.total.cache_read_input_tokens,
+                                         "cost": tracker.total.cost(config.MODEL)},
+                               "cost": tracker.format_turn(turn, config.MODEL)}
 
         # Append full assistant message (including thinking blocks for context)
         messages.append({"role": "assistant", "content": content_blocks})
@@ -246,6 +252,8 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, sessio
 
         if stop_reason != "tool_use":
             if on_event:
+                if token_event:
+                    on_event(token_event)
                 on_event({"type": "done", "stop_reason": stop_reason})
             return
 
@@ -272,13 +280,25 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, sessio
                 result_preview = str(output).strip()[:300]
                 if result_preview:
                     print(f"  {result_preview}")
-                results.append({"type": "tool_result", "tool_use_id": block.id, "content": str(output)})
+                # Truncate output once (env-configurable). Applied to both the
+                # LLM-bound content and the frontend display so they stay in sync.
+                output_str = str(output)
+                orig_len = len(output_str)
+                if orig_len > config.TOOL_OUTPUT_LIMIT:
+                    output_str = (output_str[:config.TOOL_OUTPUT_LIMIT]
+                                  + f"\n...[truncated, {orig_len - config.TOOL_OUTPUT_LIMIT} more chars]")
+                results.append({"type": "tool_result", "tool_use_id": block.id, "content": output_str})
                 if on_event:
                     on_event({"type": "tool_result", "id": block.id, "name": block.name,
-                              "output": str(output)[:3000], "is_error": str(output).startswith("Error:")})
+                              "output": output_str, "is_error": output_str.startswith("Error:")})
 
                 if block.name in TODO_TOOL_NAMES:
                     used_todo_tool = True
+
+        # End-of-round: emit token_usage after all tool results have been sent
+        # so the frontend renders it below the round's tool blocks.
+        if on_event and token_event:
+            on_event(token_event)
 
         rounds_since_todo = 0 if used_todo_tool else rounds_since_todo + 1
         if rounds_since_todo >= 5 and tools_mod.TODO and tools_mod.TODO.has_content:

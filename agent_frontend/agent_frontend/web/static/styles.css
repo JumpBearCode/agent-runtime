@@ -337,6 +337,20 @@ details[open] .chevron-icon { transform: rotate(90deg); }
     padding: 10px 16px;
 }
 
+/* Per-message collapse indicator — attached to each assistant message at its
+   top-left; clicking folds the message's tool/thinking/token blocks. */
+.collapse-indicator {
+    display: inline-block;
+    font-family: 'SF Mono', SFMono-Regular, Consolas, monospace;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    cursor: pointer;
+    user-select: none;
+    padding: 0.15rem 0;
+    margin-bottom: 0.3rem;
+}
+.collapse-indicator:hover { color: #475569; }
+
 /* --- Sidebar Collapsed --- */
 #sidebar-toggle { display: none; }
 
@@ -505,13 +519,11 @@ details[open] .chevron-icon { transform: rotate(90deg); }
     margin: 0.5rem 0;
     font-size: 0.82rem;
     line-height: 1.6;
-    color: #999;
-    max-height: 100px;
+    color: #666;
+    max-height: 120px;
     overflow: hidden;
     cursor: pointer;
-    transition: all 0.3s ease;
-    filter: blur(2px);
-    -webkit-filter: blur(2px);
+    transition: max-height 0.3s ease;
     white-space: pre-wrap;
 }
 
@@ -524,17 +536,11 @@ details[open] .chevron-icon { transform: rotate(90deg); }
     letter-spacing: 0.5px;
     text-transform: uppercase;
     margin-bottom: 0.25rem;
-    filter: blur(0) !important;
-    position: relative;
-    z-index: 1;
 }
 
 .thinking-block:hover,
 .thinking-block.expanded {
-    filter: blur(0);
-    -webkit-filter: blur(0);
     max-height: 600px;
-    color: #666;
     overflow-y: auto;
 }
 
@@ -606,6 +612,49 @@ details[open] .chevron-icon { transform: rotate(90deg); }
 
 /* ADF tool accent */
 .tool-call-block.adf-tool { border-left: 3px solid #0078d4; }
+
+/* Tool expandable details — used by both MCP and non-MCP tools.
+   MCP fills both .tool-input-pre and .tool-output-pre.
+   Non-MCP fills only .tool-output-pre. */
+.tool-call-block .tool-details {
+    margin-top: 0.4rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid #e2e8f0;
+}
+.tool-call-block .tool-details-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #64748b;
+    margin: 0.3rem 0 0.2rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.tool-call-block .tool-input-pre,
+.tool-call-block .tool-output-pre {
+    margin: 0;
+    padding: 0.4rem 0.6rem;
+    background: #f1f5f9;
+    border-radius: 4px;
+    font-family: 'SF Mono', SFMono-Regular, Consolas, monospace;
+    font-size: 0.72rem;
+    color: #334155;
+    white-space: pre-wrap;
+    max-height: 240px;
+    overflow-y: auto;
+}
+.tool-call-block .tool-output-pre.error {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+/* --- Collapsed state: per-message. Only this message's decorative blocks
+   are hidden; the assistant's prose (.response-content) stays visible. --- */
+.message.assistant-message.collapsed .stream-container .tool-call-block,
+.message.assistant-message.collapsed .stream-container .token-usage-line,
+.message.assistant-message.collapsed .stream-container .confirm-block,
+.message.assistant-message.collapsed .stream-container .thinking-block {
+    display: none;
+}
 
 /* --- Token Usage --- */
 .token-usage,

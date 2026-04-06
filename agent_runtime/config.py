@@ -49,6 +49,11 @@ WORKDIR = Path.cwd()
 COMPACT_THRESHOLD = 50000
 KEEP_RECENT = 3
 
+# Max characters of a tool's stringified output. Applied to BOTH the
+# tool_result content sent back to the LLM and the frontend display event.
+# Override via env: TOOL_OUTPUT_LIMIT=20000
+TOOL_OUTPUT_LIMIT = int(os.getenv("TOOL_OUTPUT_LIMIT", "10000"))
+
 # Thinking — set via --thinking flag
 THINKING_ENABLED = False
 THINKING_BUDGET = 10000  # max tokens for thinking per turn
