@@ -14,7 +14,6 @@ def main():
     parser.add_argument("--thinking", "-t", action="store_true", default=False, help="Enable extended thinking")
     parser.add_argument("--thinking-budget", type=int, default=10000, help="Max tokens for thinking")
     parser.add_argument("--settings", default=None, help="Path to settings folder (overrides .agent_settings)")
-    parser.add_argument("--confirm", action="store_true", default=False, help="Enable confirmation for dangerous tools")
     args = parser.parse_args()
 
     # Set config directly — same process, no need for os.environ
@@ -25,7 +24,6 @@ def main():
     config.THINKING_ENABLED = args.thinking
     config.THINKING_BUDGET = args.thinking_budget
     config.SETTINGS_OVERRIDE = args.settings
-    config.CONFIRM = args.confirm
 
     import uvicorn
     uvicorn.run("agent_frontend.web.server:app",

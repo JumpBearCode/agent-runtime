@@ -55,10 +55,6 @@ def main():
         help="Path to settings folder (overrides project and user-level .agent_settings).",
     )
     parser.add_argument(
-        "--confirm", action="store_true", default=False,
-        help="Enable human-in-the-loop confirmation for dangerous tool calls.",
-    )
-    parser.add_argument(
         "--session", "-s", default=None,
         help="Session ID to resume. If omitted, starts a new session.",
     )
@@ -76,7 +72,6 @@ def main():
     config.THINKING_ENABLED = args.thinking
     config.THINKING_BUDGET = args.thinking_budget
     config.SETTINGS_OVERRIDE = args.settings
-    config.CONFIRM = args.confirm
 
     # Initialize managers
     todo = Todo()
@@ -99,10 +94,12 @@ def main():
         mcp.start(mcp_cfg)
         tools_mod.rebuild_tools()
 
-    # Confirm hook — after MCP so TOOLS is fully populated for validation
-    if config.CONFIRM:
-        confirm_set = validate_hitl(config.resolve_hitl())
+    # Confirm hook — after MCP so TOOLS is fully populated for validation.
+    # Registered iff HITL.json resolves to a non-empty tool set.
+    confirm_set = validate_hitl(config.resolve_hitl())
+    if confirm_set:
         hooks.add(HumanConfirmHook(confirm_tools=confirm_set))
+        config.CONFIRM = True
 
     system = build_system_prompt(skill_loader, mcp_manager=mcp)
 

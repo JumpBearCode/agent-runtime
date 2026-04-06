@@ -28,7 +28,6 @@ def get_engine():
             thinking=config.THINKING_ENABLED,
             thinking_budget=config.THINKING_BUDGET,
             settings=config.SETTINGS_OVERRIDE,
-            confirm=config.CONFIRM,
         ))
     return _engine
 

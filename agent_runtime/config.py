@@ -65,12 +65,32 @@ _SETTINGS_DIR = ".agent_settings"
 
 
 def _candidate_dirs() -> list[Path]:
-    """Settings directories in priority order (highest first)."""
-    dirs = []
+    """Settings directories in priority order (highest first).
+
+    Walks up from WORKDIR through ancestor directories so a repo-level
+    `.agent_settings/` applies to sub-workspaces created with `-w subdir`.
+    Falls back to `~/.agent_settings/` last.
+    """
+    dirs: list[Path] = []
+    seen: set[Path] = set()
+
+    def _add(d: Path):
+        d = d.resolve()
+        if d not in seen:
+            seen.add(d)
+            dirs.append(d)
+
     if SETTINGS_OVERRIDE:
-        dirs.append(Path(SETTINGS_OVERRIDE).resolve())
-    dirs.append(WORKDIR / _SETTINGS_DIR)
-    dirs.append(Path.home() / _SETTINGS_DIR)
+        _add(Path(SETTINGS_OVERRIDE))
+
+    current = WORKDIR.resolve()
+    while True:
+        _add(current / _SETTINGS_DIR)
+        if current.parent == current:
+            break
+        current = current.parent
+
+    _add(Path.home() / _SETTINGS_DIR)
     return dirs
 
 

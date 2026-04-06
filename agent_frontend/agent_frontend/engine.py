@@ -30,7 +30,6 @@ class EngineConfig:
     thinking: bool = False
     thinking_budget: int = 10000
     settings: Optional[str] = None
-    confirm: bool = False
 
     def apply(self):
         """Push values to the global config module."""
@@ -42,7 +41,6 @@ class EngineConfig:
         config.THINKING_ENABLED = self.thinking
         config.THINKING_BUDGET = self.thinking_budget
         config.SETTINGS_OVERRIDE = self.settings
-        config.CONFIRM = self.confirm
 
 
 # Map raw event dict from loop.py on_event callback -> EngineEvent dataclass
@@ -128,10 +126,12 @@ class AgentEngine:
             self.mcp.start(mcp_cfg)
             tools_mod.rebuild_tools()
 
-        # Confirm hook — after MCP so TOOLS is fully populated for validation
-        if config.CONFIRM:
-            confirm_set = validate_hitl(config.resolve_hitl())
+        # Confirm hook — after MCP so TOOLS is fully populated for validation.
+        # Registered iff HITL.json resolves to a non-empty tool set.
+        confirm_set = validate_hitl(config.resolve_hitl())
+        if confirm_set:
             self.hooks.add(_EngineConfirmHook(self, confirm_tools=confirm_set))
+            config.CONFIRM = True
 
         self.system = build_system_prompt(self.skill_loader, mcp_manager=self.mcp)
 
