@@ -24,7 +24,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY --chown=root:root agents/adf-agent/pyproject.toml agents/adf-agent/uv.lock /tmp/deps/
 RUN cd /tmp/deps \
     && uv export --frozen --no-hashes --no-dev --no-emit-project --format requirements.txt > requirements.txt \
-    && /app/.venv/bin/pip install --no-cache-dir -r requirements.txt \
+    && uv pip install --python /app/.venv/bin/python --no-cache -r requirements.txt \
     && rm -rf /tmp/deps /usr/local/bin/uv
 
 # Bake in this agent's identity.

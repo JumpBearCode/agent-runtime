@@ -118,10 +118,16 @@ class MCPManager:
             )
             read_stream, write_stream, _ = transport
         else:
+            # MCP's stdio default filters the subprocess env to HOME+PATH only.
+            # Inside an agent-runtime container that's already the security
+            # boundary, so we pass through the full env (plus any overrides
+            # from mcp.json's `env` block, which wins on conflict).
+            import os as _os
+            merged_env = {**_os.environ, **(server_cfg.get("env") or {})}
             params = StdioServerParameters(
                 command=server_cfg["command"],
                 args=server_cfg.get("args", []),
-                env=server_cfg.get("env"),
+                env=merged_env,
             )
             transport = await self._exit_stack.enter_async_context(
                 stdio_client(params)
