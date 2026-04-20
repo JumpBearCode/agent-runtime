@@ -177,3 +177,77 @@ If a real frontend is about to start integrating, do this batch first (≤1 hr t
 5. **#12** — write `doc/sse-contract.md`. Frontend devs need this as input.
 
 Defer #5, #6, #9, #10, #13–#17 until either (a) production deployment, or (b) the next time you're already in that file for some other reason.
+
+---
+
+## ✅ Resolved
+
+- **#1, #2** — per-thread Todo (`tools_mod.set_thread_todo`) + per-chat `TokenTracker` constructed inside `chat_stream`. Token totals and todos are now isolated per request.
+- **#3, #4** — `core/compression.py` deleted entirely; `auto_compact` / `micro_compact` / `should_compact` / transcript writes / `compact` tool / `_inject_todo` all gone. Will revisit compaction later with a cleaner design.
+- **#10** — `agents/adf-agent/pyproject.toml` + `uv.lock`; Dockerfile installs via `uv export → pip install -r requirements.txt`. Builds reproducible.
+- **#11** — `/api/info` returns only `{agent_name, model, mcp_tools, hitl_tools, hitl_timeout}`. `AGENT_NAME` env var declared empty in `base.Dockerfile`, set per-agent in each `Dockerfile`.
+- **#18** — `self._on_event` cross-chat race; resolved by passing `on_event` directly into `_RegistryConfirmHook` constructor (the hook is already per-trace).
+
+---
+
+## 🔴 Round 2 — additional findings from engine.py review (2026-04-20)
+
+### 18. `self._on_event` cross-chat overwrite ✅ FIXED
+
+**Where**: `engine.py:chat_stream` did `self._on_event = on_event`. The HITL confirm hook then read `self._engine._on_event` to emit `confirm_request` events.
+
+**Symptom**: two concurrent chats — chat A and chat B — both run `self._on_event = X`. Whichever started later wins. When chat A's tool triggers HITL, the hook reads the engine attribute → finds chat B's callback → pushes `confirm_request` to chat B's SSE stream. Chat A's frontend never sees the prompt; chat B's frontend gets a phantom prompt for a tool it never invoked. Whoever resolves it (or the timeout fires) routes back to the wrong agent thread.
+
+**Fix**: stop storing `on_event` on the engine. The `_RegistryConfirmHook` already gets a fresh instance per `chat_stream` call — pass `on_event` directly into its constructor. Engine no longer holds any per-chat state.
+
+### 19. ThreadPoolExecutor non-daemon threads → shutdown can hang up to HITL_TIMEOUT
+
+**Where**: `engine.py:193-196` creates a stdlib `ThreadPoolExecutor`. `engine.py:324` does `self._executor.shutdown(wait=False)` in the lifespan exit.
+
+**Why it hangs**: stdlib `ThreadPoolExecutor` uses non-daemon worker threads. `concurrent.futures.thread._python_exit` is registered as `atexit` and joins all worker threads before the interpreter is allowed to exit. `shutdown(wait=False)` returns immediately, but the atexit join blocks until each worker returns. If even one chat thread is sitting in `slot.event.wait(600)` (HITL prompt mid-flight when SIGTERM arrives), the process can't terminate until that wait expires — which may exceed the container grace period and trigger SIGKILL anyway, leaking in-flight work and SSE connections.
+
+**Fix**: in `shutdown()`, drain pending HITL slots first so blocked threads wake up and unwind:
+
+```python
+def shutdown(self):
+    self._confirm_registry.cancel_all()        # new method — sets every slot's event
+    self.mcp.shutdown()
+    self._executor.shutdown(wait=True, cancel_futures=True)
+```
+
+Then update `_ConfirmRegistry`:
+
+```python
+def cancel_all(self):
+    with self._lock:
+        slots = list(self._slots.values())
+        self._slots.clear()
+        self._by_trace.clear()
+    for slot in slots:
+        if not slot.event.is_set():
+            slot.result = False
+            slot.event.set()
+```
+
+Also add a tighter overall deadline in `lifespan`'s exit so a stuck MCP server can't indefinitely block the join.
+
+### 20. `asyncio.get_event_loop()` is deprecated inside async functions
+
+**Where**: `engine.py:277` — `loop = asyncio.get_event_loop()` inside `chat_stream` (an `async def`).
+
+**Why it matters**: in Python 3.12+ this emits `DeprecationWarning`; in 3.14+ it may behave differently / raise. Inside an async function the modern idiom is `asyncio.get_running_loop()`, which is faster and unambiguous (it returns the loop the coroutine is actually running on, never creates a new one).
+
+**Fix**: trivial one-line swap. No semantic change today; future-proofs the upgrade path.
+
+### 21. SSE queue overflow silently drops events
+
+**Where**: `engine.py:278` — `asyncio.Queue(maxsize=1024)`. `on_event` (called from the agent thread) does `loop.call_soon_threadsafe(queue.put_nowait, evt)`.
+
+**Symptom**: if the frontend / network can't keep up with the agent's event production rate (text_deltas are emitted per token, easily 50/sec), the queue can fill. When the scheduled `put_nowait` runs on the event loop and finds the queue full, it raises `asyncio.QueueFull`. asyncio logs this as an "exception in callback" but the agent thread keeps running and never knows. Result: silently lost text/tool events, and the frontend's reconstructed conversation is incomplete.
+
+**Fix options** (pick one):
+- **Detect and log**: catch `QueueFull` inside `on_event`'s scheduled callable and `logger.warning`. At least operators can see backpressure.
+- **Block the producer**: replace `call_soon_threadsafe(queue.put_nowait, evt)` with `asyncio.run_coroutine_threadsafe(queue.put(evt), loop)` so the agent thread blocks when the queue is full. Trade-off: the agent thread will now stall on slow consumers, which may interact badly with HITL timeouts.
+- **Increase headroom**: bump maxsize to 8192. Cheap, doesn't fix the underlying contract issue.
+
+For internal-tool scale, "detect and log" + an oversize bump is enough. Consider properly when load testing.

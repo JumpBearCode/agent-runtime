@@ -130,12 +130,21 @@ class _ConfirmRegistry:
 class _RegistryConfirmHook(PreToolHook):
     """PreToolHook that opens a confirm slot and waits for the frontend.
 
-    Bound to a specific trace_id — the engine creates a fresh hook per
-    chat_stream call so concurrent chats can never share state.
+    Bound at construction to a single (registry, on_event, trace_id) triple
+    so concurrent chats can never cross-route their HITL events. Both the
+    registry and the on_event callback come straight from chat_stream's
+    local scope — nothing is read off the engine instance at run time.
     """
 
-    def __init__(self, engine: "AgentEngine", trace_id: str, confirm_tools: set[str]):
-        self._engine = engine
+    def __init__(
+        self,
+        registry: "_ConfirmRegistry",
+        on_event,
+        trace_id: str,
+        confirm_tools: set[str],
+    ):
+        self._registry = registry
+        self._on_event = on_event
         self._trace_id = trace_id
         self.confirm_tools = confirm_tools
         self.reason = ""
@@ -144,11 +153,10 @@ class _RegistryConfirmHook(PreToolHook):
         if name not in self.confirm_tools:
             return HookResult.SKIP
 
-        registry = self._engine._confirm_registry
-        req_id, slot = registry.open(self._trace_id, name)
+        req_id, slot = self._registry.open(self._trace_id, name)
 
-        if self._engine._on_event:
-            self._engine._on_event({
+        if self._on_event:
+            self._on_event({
                 "type": "confirm_request",
                 "request_id": req_id,
                 "tool_name": name,
@@ -162,7 +170,7 @@ class _RegistryConfirmHook(PreToolHook):
 
         if not signaled:
             # Timeout — clean up the slot we own and abort the round.
-            registry.discard(req_id)
+            self._registry.discard(req_id)
             self.reason = f"HITL timeout ({config.HITL_TIMEOUT}s)"
             raise AbortRound(self.reason)
 
@@ -188,7 +196,6 @@ class AgentEngine:
         self.skill_loader = SkillLoader(config.SKILLS_DIR)
         self.mcp = MCPManager()
         self._confirm_registry = _ConfirmRegistry()
-        self._on_event = None
 
         self._executor = ThreadPoolExecutor(
             max_workers=config.MAX_CONCURRENT_CHATS,
@@ -267,13 +274,6 @@ class AgentEngine:
         if trace_id is None:
             trace_id = uuid.uuid4().hex
 
-        # Per-chat state — none of this leaks across requests.
-        hooks = HookManager()
-        if self._hitl_tools:
-            hooks.add(_RegistryConfirmHook(self, trace_id, self._hitl_tools))
-        todo = Todo()
-        tracker = TokenTracker()
-
         loop = asyncio.get_event_loop()
         queue: asyncio.Queue[Optional[EngineEvent]] = asyncio.Queue(maxsize=1024)
 
@@ -286,7 +286,16 @@ class AgentEngine:
             except RuntimeError:
                 pass  # loop closed (client gone)
 
-        self._on_event = on_event  # exposed to the confirm hook
+        # Per-chat state — none of this leaks across requests. The confirm
+        # hook closes over (registry, on_event, trace_id) directly so it
+        # never reads anything off the engine instance at run time.
+        hooks = HookManager()
+        if self._hitl_tools:
+            hooks.add(_RegistryConfirmHook(
+                self._confirm_registry, on_event, trace_id, self._hitl_tools,
+            ))
+        todo = Todo()
+        tracker = TokenTracker()
 
         def _run_sync():
             tools_mod.set_thread_hooks(hooks)
@@ -319,7 +328,6 @@ class AgentEngine:
 
     # ── shutdown ──
     def shutdown(self):
-        self._on_event = None
         self.mcp.shutdown()
         self._executor.shutdown(wait=False)
 
