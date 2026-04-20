@@ -186,7 +186,6 @@ class AgentEngine:
 
     def __init__(self):
         self.skill_loader = SkillLoader(config.SKILLS_DIR)
-        self.tracker = TokenTracker()
         self.mcp = MCPManager()
         self._confirm_registry = _ConfirmRegistry()
         self._on_event = None
@@ -196,9 +195,9 @@ class AgentEngine:
             thread_name_prefix="agent-loop",
         )
 
-        # tools.py module-level wiring — Todo and SkillLoader are read-only;
-        # HookManager is bound per-thread via tools_mod.set_thread_hooks.
-        tools_mod.TODO = Todo()
+        # tools.py module-level wiring. SkillLoader and MCP are read-only and
+        # safe to share across chats. Todo and HookManager are per-thread —
+        # bound inside each agent thread by chat_stream's _run_sync.
         tools_mod.SKILL_LOADER = self.skill_loader
         tools_mod.MCP = self.mcp
 
@@ -270,10 +269,12 @@ class AgentEngine:
         if trace_id is None:
             trace_id = uuid.uuid4().hex
 
-        # Per-chat HookManager — bound to this trace_id, not shared.
+        # Per-chat state — none of this leaks across requests.
         hooks = HookManager()
         if self._hitl_tools:
             hooks.add(_RegistryConfirmHook(self, trace_id, self._hitl_tools))
+        todo = Todo()
+        tracker = TokenTracker()
 
         loop = asyncio.get_event_loop()
         queue: asyncio.Queue[Optional[EngineEvent]] = asyncio.Queue(maxsize=1024)
@@ -291,13 +292,15 @@ class AgentEngine:
 
         def _run_sync():
             tools_mod.set_thread_hooks(hooks)
+            tools_mod.set_thread_todo(todo)
             try:
-                agent_loop(messages, self.system, self.tracker, on_event=on_event)
+                agent_loop(messages, self.system, tracker, on_event=on_event)
             except Exception as e:
                 logger.exception("agent_loop crashed")
                 loop.call_soon_threadsafe(queue.put_nowait, Error(message=str(e)))
             finally:
                 tools_mod.set_thread_hooks(None)
+                tools_mod.set_thread_todo(None)
                 loop.call_soon_threadsafe(queue.put_nowait, None)
 
         future = loop.run_in_executor(self._executor, _run_sync)

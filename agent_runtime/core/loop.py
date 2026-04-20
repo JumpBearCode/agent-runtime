@@ -215,9 +215,10 @@ def _inject_todo(messages: list):
     Merges into the existing first user message to preserve user/assistant
     alternation instead of inserting a separate user message at index 0.
     """
-    if not (tools_mod.TODO and tools_mod.TODO.has_content):
+    todo = tools_mod.active_todo()
+    if not (todo and todo.has_content):
         return
-    todo_block = f"<todo>\n{tools_mod.TODO.read()}\n</todo>\n\n"
+    todo_block = f"<todo>\n{todo.read()}\n</todo>\n\n"
     # After auto_compact, messages[0] is always a user message — prepend todo to it.
     if messages and messages[0]["role"] == "user" and isinstance(messages[0]["content"], str):
         messages[0]["content"] = todo_block + messages[0]["content"]
@@ -329,8 +330,9 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, on_eve
             on_event(token_event)
 
         rounds_since_todo = 0 if used_todo_tool else rounds_since_todo + 1
-        if rounds_since_todo >= 5 and tools_mod.TODO and tools_mod.TODO.has_content:
-            results.append({"type": "text", "text": f"<todo>\n{tools_mod.TODO.read()}\n</todo>"})
+        todo = tools_mod.active_todo()
+        if rounds_since_todo >= 5 and todo and todo.has_content:
+            results.append({"type": "text", "text": f"<todo>\n{todo.read()}\n</todo>"})
 
         messages.append({"role": "user", "content": results})
 

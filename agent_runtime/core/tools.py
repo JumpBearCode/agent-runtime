@@ -7,14 +7,14 @@ from pathlib import Path
 from . import config
 
 # Module-level wiring set by the engine at startup.
-TODO = None       # Todo instance
-SKILL_LOADER = None  # SkillLoader instance
-MCP = None        # MCPManager instance
-HOOKS = None      # Fallback HookManager (used only if no thread-local set)
+SKILL_LOADER = None  # SkillLoader instance — read-only, safe to share
+MCP = None           # MCPManager instance — read-only from agent's POV
+TODO = None          # Fallback Todo (used only if no thread-local set)
+HOOKS = None         # Fallback HookManager (used only if no thread-local set)
 
-# Per-thread HookManager. The engine binds one inside every agent thread so
-# concurrent chats never cross-contaminate (each chat has its own HookManager
-# with a confirm hook bound to its own session_id).
+# Per-thread state. The engine binds these inside every agent thread so
+# concurrent chats never cross-contaminate (each chat has its own Todo and
+# its own HookManager with a confirm hook bound to its own trace_id).
 _thread_state = threading.local()
 
 
@@ -24,8 +24,19 @@ def set_thread_hooks(hooks) -> None:
     _thread_state.hooks = hooks
 
 
+def set_thread_todo(todo) -> None:
+    """Bind a Todo instance to the current thread."""
+    _thread_state.todo = todo
+
+
 def _active_hooks():
     return getattr(_thread_state, "hooks", None) or HOOKS
+
+
+def active_todo():
+    """Return the current thread's Todo (or the module fallback). Public so
+    loop.py can introspect todo state for system-prompt injection."""
+    return getattr(_thread_state, "todo", None) or TODO
 
 
 def safe_path(p: str) -> Path:
@@ -86,8 +97,8 @@ TOOL_HANDLERS = {
     "read_file":        lambda **kw: run_read(kw["path"], kw.get("limit")),
     "write_file":       lambda **kw: run_write(kw["path"], kw["content"]),
     "edit_file":        lambda **kw: run_edit(kw["path"], kw["old_text"], kw["new_text"]),
-    "todo_write":       lambda **kw: TODO.write(kw["items"]),
-    "todo_read":        lambda **kw: TODO.read(),
+    "todo_write":       lambda **kw: active_todo().write(kw["items"]),
+    "todo_read":        lambda **kw: active_todo().read(),
     "load_skill":       lambda **kw: SKILL_LOADER.get_content(kw["name"]),
     "compact":          lambda **kw: "Manual compression requested.",
 }
