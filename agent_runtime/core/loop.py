@@ -1,7 +1,7 @@
 """Agent loop — streaming + optional thinking."""
 
 import json
-import sys
+import logging
 from pathlib import Path
 
 from . import config
@@ -10,6 +10,8 @@ from .tools import TOOLS, dispatch_tool
 
 from .hooks import AbortRound
 from .tracking import TokenTracker
+
+logger = logging.getLogger(__name__)
 
 TODO_TOOL_NAMES = {"todo_write", "todo_read"}
 
@@ -146,7 +148,6 @@ def _stream_response(system: str, messages: list, on_event=None):
                 elif block.type == "thinking":
                     in_thinking = True
                     current_thinking = ""
-                    sys.stdout.write("\033[2m")  # dim for thinking
                     if on_event:
                         on_event({"type": "thinking_start"})
                 elif block.type == "tool_use":
@@ -157,14 +158,10 @@ def _stream_response(system: str, messages: list, on_event=None):
             elif event.type == "content_block_delta":
                 delta = event.delta
                 if delta.type == "text_delta":
-                    sys.stdout.write(delta.text)
-                    sys.stdout.flush()
                     current_text += delta.text
                     if on_event:
                         on_event({"type": "text_delta", "text": delta.text})
                 elif delta.type == "thinking_delta":
-                    sys.stdout.write(delta.thinking)
-                    sys.stdout.flush()
                     current_thinking += delta.thinking
                     if on_event:
                         on_event({"type": "thinking_delta", "text": delta.thinking})
@@ -173,18 +170,16 @@ def _stream_response(system: str, messages: list, on_event=None):
 
             elif event.type == "content_block_stop":
                 if current_block_type == "text" and current_text:
-                    # Use the text block object from the final message
                     in_text = False
-                    sys.stdout.write("\n")
                     if on_event:
                         on_event({"type": "text_stop"})
                 elif current_block_type == "thinking":
                     in_thinking = False
-                    sys.stdout.write("\033[0m\n")  # reset dim
                     if on_event:
                         on_event({"type": "thinking_stop"})
                 elif current_block_type == "tool_use":
-                    # Parse accumulated JSON
+                    # Parse accumulated JSON to validate; the final message
+                    # below carries the structured value used downstream.
                     try:
                         tool_input = json.loads(current_tool_input_json) if current_tool_input_json else {}
                     except json.JSONDecodeError:
@@ -222,7 +217,7 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, on_eve
         token_event = None
         if tracker and usage:
             turn = tracker.record(usage)
-            print(f"\033[2m  [{tracker.format_turn(turn, config.MODEL)}]\033[0m")
+            logger.info("turn: %s", tracker.format_turn(turn, config.MODEL))
             if on_event:
                 token_event = {"type": "token_usage",
                                "turn": {"input": turn.input_tokens,
@@ -275,10 +270,10 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, on_eve
             except Exception as e:
                 output = f"Error: {e}"
             args_summary = _format_args(block.name, block.input)
-            print(f"\033[33m> {block.name}\033[0m{args_summary}")
+            logger.info("tool: %s%s", block.name, args_summary)
             result_preview = str(output).strip()[:300]
             if result_preview:
-                print(f"  {result_preview}")
+                logger.debug("tool result preview: %s", result_preview)
             output_str = str(output)
             orig_len = len(output_str)
             if orig_len > config.TOOL_OUTPUT_LIMIT:
@@ -305,7 +300,7 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, on_eve
         messages.append({"role": "user", "content": results})
 
         if aborted_reason is not None:
-            print(f"[round aborted: {aborted_reason}]")
+            logger.info("round aborted: %s", aborted_reason)
             if on_event:
                 on_event({"type": "done", "stop_reason": "hitl_timeout"})
             return

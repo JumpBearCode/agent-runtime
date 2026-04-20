@@ -184,6 +184,7 @@ Defer #5, #6, #9, #10, #13–#17 until either (a) production deployment, or (b) 
 
 - **#1, #2** — per-thread Todo (`tools_mod.set_thread_todo`) + per-chat `TokenTracker` constructed inside `chat_stream`. Token totals and todos are now isolated per request.
 - **#3, #4** — `core/compression.py` deleted entirely; `auto_compact` / `micro_compact` / `should_compact` / transcript writes / `compact` tool / `_inject_todo` all gone. Will revisit compaction later with a cleaner design.
+- **#5** — `core/loop.py` now uses `logging.getLogger(__name__)`; all `print()` + `sys.stdout.write()` + ANSI escapes removed. `api/app.py` configures structured `%(asctime)s %(levelname)s %(name)s :: %(message)s` via `logging.basicConfig(force=True)`. `LOG_LEVEL` env var (default `INFO`).
 - **#10** — `agents/adf-agent/pyproject.toml` + `uv.lock`; Dockerfile installs via `uv export → pip install -r requirements.txt`. Builds reproducible.
 - **#11** — `/api/info` returns only `{agent_name, model, mcp_tools, hitl_tools, hitl_timeout}`. `AGENT_NAME` env var declared empty in `base.Dockerfile`, set per-agent in each `Dockerfile`.
 - **#18** — `self._on_event` cross-chat race; resolved by passing `on_event` directly into `_RegistryConfirmHook` constructor (the hook is already per-trace).

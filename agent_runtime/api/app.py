@@ -16,6 +16,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from ..engine import AgentEngine
 from .routes import chat, confirm, meta
 
+# Container-friendly logging: structured prefix, no ANSI, level via env.
+# `force=True` so we win over uvicorn's default handler when imported as
+# `uvicorn agent_runtime.api.app:app`.
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s %(levelname)s %(name)s :: %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S",
+    force=True,
+)
 logger = logging.getLogger(__name__)
 
 
