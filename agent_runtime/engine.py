@@ -215,19 +215,17 @@ class AgentEngine:
     # ── meta ──
     @property
     def info(self) -> dict:
+        """Self-description for the frontend agent picker.
+
+        Returns only fields the frontend needs to render the picker and the
+        chat UI. Container-internal paths and operational knobs stay private.
+        """
         return {
-            "workspace": str(config.WORKDIR),
-            "settings_dir": str(config.SETTINGS_DIR),
-            "skills_dir": str(config.SKILLS_DIR),
-            "model": config.MODEL,
-            "thinking": config.THINKING_ENABLED,
-            "thinking_budget": config.THINKING_BUDGET if config.THINKING_ENABLED else None,
-            "mcp_servers": len(self.mcp._servers) if self.mcp.tool_names else 0,
-            "mcp_tools": sorted(self.mcp.tool_names),
-            "hitl_tools": sorted(self._hitl_tools),
+            "agent_name":   config.AGENT_NAME,
+            "model":        config.MODEL,
+            "mcp_tools":    sorted(self.mcp.tool_names),
+            "hitl_tools":   sorted(self._hitl_tools),
             "hitl_timeout": config.HITL_TIMEOUT,
-            "max_concurrent_chats": config.MAX_CONCURRENT_CHATS,
-            "system_prompt_file": config.SYSTEM_PROMPT_FILE,
         }
 
     def get_tools(self) -> list[str]:

@@ -15,19 +15,24 @@
 
 FROM agent-runtime-base:0.1
 
-# Install ADF MCP server runtime deps (the base image's venv only has
-# agent-runtime + its deps — the MCP server needs azure SDKs).
+# Install agent-specific Python deps from this agent's locked pyproject.
+# uv resolves once at build time (export → requirements.txt), then plain pip
+# installs into the existing base venv. Reproducible: identical inputs give
+# identical bytes.
 USER root
-RUN /app/.venv/bin/pip install --no-cache-dir \
-        azure-identity \
-        azure-mgmt-datafactory \
-        mcp \
-        python-dotenv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --chown=root:root agents/adf-agent/pyproject.toml agents/adf-agent/uv.lock /tmp/deps/
+RUN cd /tmp/deps \
+    && uv export --frozen --no-hashes --no-dev --no-emit-project --format requirements.txt > requirements.txt \
+    && /app/.venv/bin/pip install --no-cache-dir -r requirements.txt \
+    && rm -rf /tmp/deps /usr/local/bin/uv
 
 # Bake in this agent's identity.
 COPY --chown=agent:agent agents/adf-agent/skills   /app/skills
 COPY --chown=agent:agent agents/adf-agent/settings /app/settings
 COPY --chown=agent:agent agents/adf-agent/prompts  /app/prompts
 COPY --chown=agent:agent agents/adf-agent/mcp      /app/mcp
+
+ENV AGENT_NAME=adf
 
 USER agent

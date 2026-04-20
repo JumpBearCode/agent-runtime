@@ -1,6 +1,9 @@
 """Global configuration — env-driven for container deployment.
 
 Container-friendly env vars:
+  AGENT_NAME                — short identifier the container reports via /api/info. Default: ""
+                              Per-agent images set this in their Dockerfile so the frontend
+                              picker can self-discover what each container is.
   AGENT_WORKDIR             — workspace dir for tool file IO. Default: cwd
   AGENT_SETTINGS_DIR        — folder containing mcp.json + HITL.json. Default: $AGENT_WORKDIR/.agent_settings
   AGENT_SKILLS_DIR          — folder containing skill subdirs with SKILL.md. Default: $AGENT_WORKDIR/skills
@@ -48,6 +51,7 @@ def _create_client():
 
 client = _create_client()
 MODEL = os.environ["MODEL_ID"]
+AGENT_NAME = os.getenv("AGENT_NAME", "")
 
 # ── workspace + per-agent paths ────────────────────────────────────────────
 

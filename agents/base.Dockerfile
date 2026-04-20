@@ -35,6 +35,7 @@ COPY --from=builder /build/agent_runtime /app/agent_runtime
 
 ENV PATH="/app/.venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
+    AGENT_NAME="" \
     AGENT_WORKDIR=/app \
     AGENT_SETTINGS_DIR=/app/settings \
     AGENT_SKILLS_DIR=/app/skills \

@@ -1,0 +1,32 @@
+# Standalone uv project — declares the EXTRA Python deps this agent needs
+# beyond what agent-runtime-base already ships (anthropic, fastapi, uvicorn,
+# sse-starlette, mcp, python-dotenv).
+#
+# This file is intentionally NOT a member of the root workspace; it lives in
+# its own dependency-resolution scope so each agent can lock independently.
+#
+# Regenerate the lockfile:
+#   cd agents/adf-agent && uv lock
+#
+# The Dockerfile installs into the base venv via:
+#   uv export --frozen --no-hashes --no-dev > requirements.txt
+#   pip install --no-cache-dir -r requirements.txt
+[project]
+name = "adf-agent"
+version = "0.1.0"
+description = "Azure Data Factory bundle for agent-runtime — skills, MCP server, system prompt."
+requires-python = ">=3.12"
+dependencies = [
+    "azure-identity>=1.25.3",
+    "azure-mgmt-datafactory>=9.3.0",
+    "mcp>=1.26.0",
+    "python-dotenv>=1.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# Not actually built as a wheel — this pyproject is only used for dep resolution.
+bypass-selection = true
