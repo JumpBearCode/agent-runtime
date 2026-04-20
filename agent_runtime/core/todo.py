@@ -1,4 +1,4 @@
-"""Todo — in-memory structured todo list that survives context compaction."""
+"""Todo — in-memory structured todo list bound per-chat."""
 
 VALID_STATUSES = {"pending", "in_progress", "completed"}
 

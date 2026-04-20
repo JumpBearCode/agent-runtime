@@ -8,7 +8,6 @@ from . import config
 from . import tools as tools_mod
 from .tools import TOOLS, dispatch_tool
 
-from .compression import micro_compact, auto_compact, should_compact
 from .hooks import AbortRound
 from .tracking import TokenTracker
 
@@ -36,7 +35,7 @@ def _format_args(tool_name: str, args: dict) -> str:
 
 
 _DEFAULT_PROMPT_TEMPLATE = """You are a coding agent at {workdir}.
-Use todo_write to plan multi-step work and track progress. Update the todo list as you complete steps. Todo state survives compaction.
+Use todo_write to plan multi-step work and track progress. Update the todo list as you complete steps.
 Use load_skill to access specialized knowledge before tackling unfamiliar topics.
 
 All file operations (read_file, write_file, edit_file) are restricted to the workspace directory.
@@ -209,36 +208,10 @@ def _stream_response(system: str, messages: list, on_event=None):
     return content_blocks, stop_reason, usage
 
 
-def _inject_todo(messages: list):
-    """Inject current todo state into the first user message (after compact).
-
-    Merges into the existing first user message to preserve user/assistant
-    alternation instead of inserting a separate user message at index 0.
-    """
-    todo = tools_mod.active_todo()
-    if not (todo and todo.has_content):
-        return
-    todo_block = f"<todo>\n{todo.read()}\n</todo>\n\n"
-    # After auto_compact, messages[0] is always a user message — prepend todo to it.
-    if messages and messages[0]["role"] == "user" and isinstance(messages[0]["content"], str):
-        messages[0]["content"] = todo_block + messages[0]["content"]
-    else:
-        # Fallback: shouldn't happen after auto_compact, but be safe.
-        messages.insert(0, {"role": "user", "content": todo_block})
-
-
 def agent_loop(messages: list, system: str, tracker: TokenTracker = None, on_event=None):
     rounds_since_todo = 0
 
     while True:
-        micro_compact(messages)
-        if should_compact(tracker):
-            print("[auto_compact triggered]")
-            if on_event:
-                on_event({"type": "status", "message": "auto_compact triggered"})
-            messages[:] = auto_compact(messages, tracker)
-            _inject_todo(messages)
-
         # Stream the response (text/thinking printed live)
         content_blocks, stop_reason, usage = _stream_response(system, messages, on_event=on_event)
 
@@ -277,7 +250,6 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, on_eve
         # Execute tools
         results = []
         used_todo_tool = False
-        manual_compact = False
         aborted_reason: str | None = None
 
         for idx, block in enumerate(content_blocks):
@@ -295,17 +267,13 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, on_eve
             if on_event:
                 on_event({"type": "tool_call", "id": block.id, "name": block.name,
                           "args": block.input, "args_summary": _format_args(block.name, block.input)})
-            if block.name == "compact":
-                manual_compact = True
-                output = "Compressing..."
-            else:
-                try:
-                    output = dispatch_tool(block.name, block.input)
-                except AbortRound as e:
-                    aborted_reason = e.reason or "hook requested abort"
-                    output = f"Blocked: {aborted_reason}. Round ended; user may resend."
-                except Exception as e:
-                    output = f"Error: {e}"
+            try:
+                output = dispatch_tool(block.name, block.input)
+            except AbortRound as e:
+                aborted_reason = e.reason or "hook requested abort"
+                output = f"Blocked: {aborted_reason}. Round ended; user may resend."
+            except Exception as e:
+                output = f"Error: {e}"
             args_summary = _format_args(block.name, block.input)
             print(f"\033[33m> {block.name}\033[0m{args_summary}")
             result_preview = str(output).strip()[:300]
@@ -341,8 +309,3 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, on_eve
             if on_event:
                 on_event({"type": "done", "stop_reason": "hitl_timeout"})
             return
-
-        if manual_compact:
-            print("[manual compact]")
-            messages[:] = auto_compact(messages, tracker)
-            _inject_todo(messages)

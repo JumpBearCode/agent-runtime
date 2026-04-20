@@ -100,7 +100,6 @@ TOOL_HANDLERS = {
     "todo_write":       lambda **kw: active_todo().write(kw["items"]),
     "todo_read":        lambda **kw: active_todo().read(),
     "load_skill":       lambda **kw: SKILL_LOADER.get_content(kw["name"]),
-    "compact":          lambda **kw: "Manual compression requested.",
 }
 
 # -- Tool schemas --
@@ -116,14 +115,12 @@ CHILD_TOOLS = [
 ]
 
 BUILTIN_TOOLS = CHILD_TOOLS + [
-    {"name": "todo_write", "description": "Write or replace the entire todo list. Use to plan multi-step work and track progress. State survives context compaction.",
+    {"name": "todo_write", "description": "Write or replace the entire todo list. Use to plan multi-step work and track progress.",
      "input_schema": {"type": "object", "properties": {"items": {"type": "array", "items": {"type": "object", "properties": {"id": {"type": "integer"}, "content": {"type": "string"}, "status": {"type": "string", "enum": ["pending", "in_progress", "completed"]}}, "required": ["id", "content", "status"]}}}, "required": ["items"]}},
     {"name": "todo_read", "description": "Read the current todo list.",
      "input_schema": {"type": "object", "properties": {}}},
     {"name": "load_skill", "description": "Load specialized knowledge by name.",
      "input_schema": {"type": "object", "properties": {"name": {"type": "string", "description": "Skill name to load"}}, "required": ["name"]}},
-    {"name": "compact", "description": "Trigger manual conversation compression.",
-     "input_schema": {"type": "object", "properties": {"focus": {"type": "string", "description": "What to preserve in the summary"}}}},
 ]
 
 # TOOLS is built at startup: built-in + MCP tools

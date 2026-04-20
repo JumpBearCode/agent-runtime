@@ -8,8 +8,6 @@ Container-friendly env vars:
   AGENT_HITL_TIMEOUT        — seconds the runtime will wait for a HITL approval. Default: 600
   AGENT_MAX_CONCURRENT_CHATS — ThreadPoolExecutor max_workers. Default: 64
   TOOL_OUTPUT_LIMIT         — max chars per tool result. Default: 10000
-  COMPACT_THRESHOLD         — input-token threshold for auto-compaction. Default: 50000
-  KEEP_RECENT               — recent tool_results kept verbatim during micro-compaction. Default: 3
   MODEL_ID                  — Anthropic model id. Required.
   ANTHROPIC_API_KEY / ANTHROPIC_BASE_URL / ANTHROPIC_FOUNDRY_*
 
@@ -69,10 +67,6 @@ if SYSTEM_PROMPT_FILE is None and _default_prompt_file.is_file():
 HITL_TIMEOUT = int(os.getenv("AGENT_HITL_TIMEOUT", "600"))
 MAX_CONCURRENT_CHATS = int(os.getenv("AGENT_MAX_CONCURRENT_CHATS", "64"))
 TOOL_OUTPUT_LIMIT = int(os.getenv("TOOL_OUTPUT_LIMIT", "10000"))
-
-# Compression
-COMPACT_THRESHOLD = int(os.getenv("COMPACT_THRESHOLD", "50000"))
-KEEP_RECENT = int(os.getenv("KEEP_RECENT", "3"))
 
 # Thinking
 THINKING_ENABLED = os.getenv("AGENT_THINKING", "0") == "1"
