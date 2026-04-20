@@ -115,14 +115,20 @@ class _ConfirmRegistry:
                 self._by_trace.get(slot.trace_id, set()).discard(req_id)
 
     def cancel_trace(self, trace_id: str) -> None:
-        """SSE disconnected — cancel every pending confirm for this trace."""
+        """SSE disconnected — cancel every pending confirm for this trace.
+
+        Leaves slot.result = None (the dataclass default) so the hook can
+        distinguish this from an explicit user-deny (result=False). On a
+        cancelled trace the hook raises AbortRound to end the round
+        immediately; on an explicit deny it returns DENY so the LLM sees
+        the rejection and can adapt.
+        """
         with self._lock:
             req_ids = list(self._by_trace.pop(trace_id, set()))
             slots = [self._slots.pop(r, None) for r in req_ids]
         for slot in slots:
             if slot is not None and not slot.event.is_set():
-                slot.result = False
-                slot.event.set()
+                slot.event.set()  # result stays None — signals "cancelled"
 
 
 # ── HITL hook bridging to the registry ─────────────────────────────────────
