@@ -1,0 +1,25 @@
+.venv
+.git
+.gitignore
+.env
+.sessions
+.transcripts
+.agent_settings
+.agent_settings_example
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+
+# Frontend placeholder — base image doesn't need it.
+agent_frontend
+
+# Docs and assets.
+doc
+prompt
+*.md
+!agents/README.md
+*.png
+
+# Tests.
+tests

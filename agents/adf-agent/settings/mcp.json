@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "adf": {
+      "command": "python",
+      "args": ["/app/mcp/adf_mcp_server.py"],
+      "env": {}
+    }
+  }
+}

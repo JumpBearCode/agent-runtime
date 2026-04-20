@@ -2,12 +2,14 @@
 
 import json
 import sys
+from pathlib import Path
 
 from . import config
 from . import tools as tools_mod
 from .tools import TOOLS, dispatch_tool
 
 from .compression import micro_compact, auto_compact, should_compact
+from .hooks import AbortRound
 from .tracking import TokenTracker
 
 TODO_TOOL_NAMES = {"todo_write", "todo_read"}
@@ -33,29 +35,45 @@ def _format_args(tool_name: str, args: dict) -> str:
     return ""
 
 
+_DEFAULT_PROMPT_TEMPLATE = """You are a coding agent at {workdir}.
+Use todo_write to plan multi-step work and track progress. Update the todo list as you complete steps. Todo state survives compaction.
+Use load_skill to access specialized knowledge before tackling unfamiliar topics.
+
+All file operations (read_file, write_file, edit_file) are restricted to the workspace directory.
+Prefer tools over prose."""
+
+
 def build_system_prompt(skill_loader, mcp_manager=None) -> str:
+    """Compose the system prompt from a base template + dynamic sections.
+
+    Base template comes from config.SYSTEM_PROMPT_FILE if set and readable
+    (this is how per-agent containers inject their identity), otherwise
+    falls back to the generic coding-agent template. Skills and MCP tool
+    inventories are always appended dynamically so the file template doesn't
+    need to know which skills/MCP servers happened to load this run.
+    """
     skills = skill_loader.get_descriptions() if skill_loader else "(no skills available)"
     workdir = str(config.WORKDIR)
+
+    base = None
+    if config.SYSTEM_PROMPT_FILE:
+        path = Path(config.SYSTEM_PROMPT_FILE)
+        if path.is_file():
+            base = path.read_text().rstrip()
+    if base is None:
+        base = _DEFAULT_PROMPT_TEMPLATE.format(workdir=workdir)
 
     mcp_section = ""
     if mcp_manager and mcp_manager.tool_names:
         mcp_tools_list = ", ".join(sorted(mcp_manager.tool_names))
         mcp_section = f"""
+
 MCP (Model Context Protocol) tools are available as NATIVE tool_use calls — call them exactly like bash, read_file, etc.
 Do NOT run MCP tools via bash. They are tool_use functions, not shell commands.
 ALWAYS prefer MCP tools over bash/curl for interacting with external services.
-Available MCP tools: {mcp_tools_list}
-"""
+Available MCP tools: {mcp_tools_list}"""
 
-    return f"""You are a coding agent at {workdir}.
-Use todo_write to plan multi-step work and track progress. Update the todo list as you complete steps. Todo state survives compaction.
-Use load_skill to access specialized knowledge before tackling unfamiliar topics.
-
-All file operations (read_file, write_file, edit_file) are restricted to the workspace directory.
-Prefer tools over prose.
-{mcp_section}
-Skills available:
-{skills}"""
+    return f"{base}{mcp_section}\n\nSkills available:\n{skills}"
 
 
 def _stream_response(system: str, messages: list, on_event=None):
@@ -208,7 +226,7 @@ def _inject_todo(messages: list):
         messages.insert(0, {"role": "user", "content": todo_block})
 
 
-def agent_loop(messages: list, system: str, tracker: TokenTracker = None, session=None, on_event=None):
+def agent_loop(messages: list, system: str, tracker: TokenTracker = None, on_event=None):
     rounds_since_todo = 0
 
     while True:
@@ -247,8 +265,6 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, sessio
 
         # Append full assistant message (including thinking blocks for context)
         messages.append({"role": "assistant", "content": content_blocks})
-        if session:
-            session.save_turn(messages[-1])
 
         if stop_reason != "tool_use":
             if on_event:
@@ -261,39 +277,51 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, sessio
         results = []
         used_todo_tool = False
         manual_compact = False
+        aborted_reason: str | None = None
 
-        for block in content_blocks:
-            if block.type == "tool_use":
-                if on_event:
-                    on_event({"type": "tool_call", "id": block.id, "name": block.name,
-                              "args": block.input, "args_summary": _format_args(block.name, block.input)})
-                if block.name == "compact":
-                    manual_compact = True
-                    output = "Compressing..."
-                else:
-                    try:
-                        output = dispatch_tool(block.name, block.input)
-                    except Exception as e:
-                        output = f"Error: {e}"
-                args_summary = _format_args(block.name, block.input)
-                print(f"\033[33m> {block.name}\033[0m{args_summary}")
-                result_preview = str(output).strip()[:300]
-                if result_preview:
-                    print(f"  {result_preview}")
-                # Truncate output once (env-configurable). Applied to both the
-                # LLM-bound content and the frontend display so they stay in sync.
-                output_str = str(output)
-                orig_len = len(output_str)
-                if orig_len > config.TOOL_OUTPUT_LIMIT:
-                    output_str = (output_str[:config.TOOL_OUTPUT_LIMIT]
-                                  + f"\n...[truncated, {orig_len - config.TOOL_OUTPUT_LIMIT} more chars]")
-                results.append({"type": "tool_result", "tool_use_id": block.id, "content": output_str})
-                if on_event:
-                    on_event({"type": "tool_result", "id": block.id, "name": block.name,
-                              "output": output_str, "is_error": output_str.startswith("Error:")})
+        for idx, block in enumerate(content_blocks):
+            if block.type != "tool_use":
+                continue
 
-                if block.name in TODO_TOOL_NAMES:
-                    used_todo_tool = True
+            # If a prior tool aborted the round, backfill placeholders for the
+            # rest so the assistant's tool_use blocks all have matching
+            # tool_results — Anthropic API requires this pairing.
+            if aborted_reason is not None:
+                placeholder = f"Blocked: round aborted ({aborted_reason})."
+                results.append({"type": "tool_result", "tool_use_id": block.id, "content": placeholder})
+                continue
+
+            if on_event:
+                on_event({"type": "tool_call", "id": block.id, "name": block.name,
+                          "args": block.input, "args_summary": _format_args(block.name, block.input)})
+            if block.name == "compact":
+                manual_compact = True
+                output = "Compressing..."
+            else:
+                try:
+                    output = dispatch_tool(block.name, block.input)
+                except AbortRound as e:
+                    aborted_reason = e.reason or "hook requested abort"
+                    output = f"Blocked: {aborted_reason}. Round ended; user may resend."
+                except Exception as e:
+                    output = f"Error: {e}"
+            args_summary = _format_args(block.name, block.input)
+            print(f"\033[33m> {block.name}\033[0m{args_summary}")
+            result_preview = str(output).strip()[:300]
+            if result_preview:
+                print(f"  {result_preview}")
+            output_str = str(output)
+            orig_len = len(output_str)
+            if orig_len > config.TOOL_OUTPUT_LIMIT:
+                output_str = (output_str[:config.TOOL_OUTPUT_LIMIT]
+                              + f"\n...[truncated, {orig_len - config.TOOL_OUTPUT_LIMIT} more chars]")
+            results.append({"type": "tool_result", "tool_use_id": block.id, "content": output_str})
+            if on_event:
+                on_event({"type": "tool_result", "id": block.id, "name": block.name,
+                          "output": output_str, "is_error": output_str.startswith("Error:")})
+
+            if block.name in TODO_TOOL_NAMES:
+                used_todo_tool = True
 
         # End-of-round: emit token_usage after all tool results have been sent
         # so the frontend renders it below the round's tool blocks.
@@ -305,8 +333,12 @@ def agent_loop(messages: list, system: str, tracker: TokenTracker = None, sessio
             results.append({"type": "text", "text": f"<todo>\n{tools_mod.TODO.read()}\n</todo>"})
 
         messages.append({"role": "user", "content": results})
-        if session:
-            session.save_turn(messages[-1])
+
+        if aborted_reason is not None:
+            print(f"[round aborted: {aborted_reason}]")
+            if on_event:
+                on_event({"type": "done", "stop_reason": "hitl_timeout"})
+            return
 
         if manual_compact:
             print("[manual compact]")

@@ -16,7 +16,7 @@ class SessionStore:
     """
 
     def __init__(self, sessions_dir: Path | None = None):
-        self.sessions_dir = sessions_dir or config.WORKDIR / ".sessions"
+        self.sessions_dir = sessions_dir or config.SESSIONS_DIR
         self.sessions_dir.mkdir(parents=True, exist_ok=True)
         self.session_id: str | None = None
         self._path: Path | None = None

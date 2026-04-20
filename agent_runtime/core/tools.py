@@ -1,15 +1,31 @@
 """Tool implementations, schemas, and dispatch table."""
 
 import subprocess
+import threading
 from pathlib import Path
 
 from . import config
 
-# Lazy references — these are set by __main__.py after initialization
-TODO = None       # TodoManager instance
+# Module-level wiring set by the engine at startup.
+TODO = None       # Todo instance
 SKILL_LOADER = None  # SkillLoader instance
 MCP = None        # MCPManager instance
-HOOKS = None      # HookManager instance
+HOOKS = None      # Fallback HookManager (used only if no thread-local set)
+
+# Per-thread HookManager. The engine binds one inside every agent thread so
+# concurrent chats never cross-contaminate (each chat has its own HookManager
+# with a confirm hook bound to its own session_id).
+_thread_state = threading.local()
+
+
+def set_thread_hooks(hooks) -> None:
+    """Bind a HookManager to the current thread (call from inside the agent
+    thread, not from the asyncio event loop)."""
+    _thread_state.hooks = hooks
+
+
+def _active_hooks():
+    return getattr(_thread_state, "hooks", None) or HOOKS
 
 
 def safe_path(p: str) -> Path:
@@ -113,9 +129,9 @@ def rebuild_tools():
 
 def dispatch_tool(name: str, args: dict) -> str:
     """Dispatch a tool call — runs hooks, then routes to handler or MCP."""
-    # Pre-tool hook check
-    if HOOKS:
-        decision = HOOKS.before_tool(name, args)
+    hooks = _active_hooks()
+    if hooks:
+        decision = hooks.before_tool(name, args)
         if not decision.allowed:
             return f"Blocked: {decision.reason}"
     # Check built-in first

@@ -41,6 +41,22 @@ class HookDecision:
     reason: str = ""
 
 
+class AbortRound(Exception):
+    """Raised by a hook to terminate the current agent round immediately.
+
+    The agent loop catches this, backfills tool_results for the in-flight
+    tool_use and any remaining unprocessed tool_use blocks (Anthropic API
+    requires every tool_use to have a matching tool_result), saves the
+    session, emits a `done` event with stop_reason=hitl_timeout, and returns.
+    The thread is released; conversation history stays well-formed so the
+    user can resume in a new turn.
+    """
+
+    def __init__(self, reason: str = ""):
+        self.reason = reason
+        super().__init__(reason)
+
+
 class PreToolHook:
     """Base class for pre-tool-use hooks. Subclass and override run()."""
 
@@ -100,29 +116,6 @@ class HookManager:
 # ---------------------------------------------------------------------------
 # Built-in hooks
 # ---------------------------------------------------------------------------
-
-class HumanConfirmHook(PreToolHook):
-    """Ask the user to confirm before executing dangerous tools."""
-
-    def __init__(self, confirm_tools: set[str]):
-        self.confirm_tools = confirm_tools
-        self.reason = ""
-
-    def run(self, name: str, args: dict) -> HookResult:
-        if name not in self.confirm_tools:
-            return HookResult.SKIP
-        # Show what's about to happen
-        preview = _preview(name, args)
-        try:
-            resp = input(f"  \033[35m? Allow {name}{preview}? [Y/n]\033[0m ")
-        except (EOFError, KeyboardInterrupt):
-            self.reason = "User cancelled"
-            return HookResult.DENY
-        if resp.strip().lower() in ("", "y", "yes"):
-            return HookResult.ALLOW
-        self.reason = "User rejected"
-        return HookResult.DENY
-
 
 class LogHook(PreToolHook):
     """Log every tool call (always SKIPs, never blocks)."""
