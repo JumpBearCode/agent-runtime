@@ -355,7 +355,6 @@ _EVENT_MAP = {
                                         cost=d.get("cost", "")),
     "status": lambda d: Status(message=d.get("message", "")),
     "done": lambda d: Done(stop_reason=d.get("stop_reason", "")),
-    "message_done": lambda d: Done(stop_reason=d.get("stop_reason", "")),
     "confirm_request": lambda d: ConfirmRequest(
         request_id=d.get("request_id", ""),
         tool_name=d.get("tool_name", ""),

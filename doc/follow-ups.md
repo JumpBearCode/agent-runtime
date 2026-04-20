@@ -189,7 +189,9 @@ Defer #5, #6, #9, #10, #13–#17 until either (a) production deployment, or (b) 
 - **#10** — `agents/adf-agent/pyproject.toml` + `uv.lock`; Dockerfile installs via `uv export → pip install -r requirements.txt`. Builds reproducible.
 - **#11** — `/api/info` returns only `{agent_name, model, mcp_tools, hitl_tools, hitl_timeout}`. `AGENT_NAME` env var declared empty in `base.Dockerfile`, set per-agent in each `Dockerfile`.
 - **#18** — `self._on_event` cross-chat race; resolved by passing `on_event` directly into `_RegistryConfirmHook` constructor (the hook is already per-trace).
-- **(bonus)** — While writing tests, found `_ConfirmRegistry.cancel_trace` was setting `slot.result = False`, but the hook treats `False` as "user explicitly denied → continue round" and `None` as "cancelled → AbortRound". Cancel now leaves `result = None` so SSE-disconnect properly aborts the round.
+- **(bonus 1)** — While writing tests, found `_ConfirmRegistry.cancel_trace` was setting `slot.result = False`, but the hook treats `False` as "user explicitly denied → continue round" and `None` as "cancelled → AbortRound". Cancel now leaves `result = None` so SSE-disconnect properly aborts the round.
+- **(bonus 2)** — `_stream_response` was emitting a `message_done` event after each LLM call (mapped to `event: done` in SSE), causing 2-3 `done` events per chat. The design contract says `done` terminates the stream. Removed the per-call emission; `agent_loop` now emits exactly one `done` at end-of-round. Pinned with `assert types.count("done") == 1` regression test.
+- **(streaming tests)** — added `tests/test_api_streaming.py` with 6 end-to-end SSE tests using a `FakeAnthropicClient` that mimics the SDK's stream context manager. Three HITL flows (allow / timeout / deny) spawn a real uvicorn on a free port — `ASGITransport` doesn't reliably interleave concurrent requests, but a real socket does.
 
 ---
 

@@ -194,12 +194,10 @@ def _stream_response(system: str, messages: list, on_event=None):
         content_blocks = final_message.content
         usage = final_message.usage
 
-    if on_event:
-        on_event({"type": "message_done", "stop_reason": stop_reason,
-                  "usage": {"input": usage.input_tokens, "output": usage.output_tokens,
-                            "cache_creation": getattr(usage, 'cache_creation_input_tokens', 0),
-                            "cache_read": getattr(usage, 'cache_read_input_tokens', 0)}})
-
+    # Note: we deliberately do NOT emit a per-LLM-call "done" event here.
+    # agent_loop emits exactly one `done` at the very end of the round; that
+    # is the SSE stream terminator. Token usage is emitted separately as
+    # `token_usage` after each round's tool block.
     return content_blocks, stop_reason, usage
 
 
