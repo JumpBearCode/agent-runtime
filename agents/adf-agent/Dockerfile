@@ -4,7 +4,7 @@
 #   docker build -f agents/base.Dockerfile -t agent-runtime-base:0.1 .
 #   docker build -f agents/adf-agent/Dockerfile -t agent-runtime-adf:0.1 .
 #
-# Run:
+# Run (minimal):
 #   docker run --rm -p 8001:8000 \
 #       -e MODEL_ID=claude-sonnet-4-6 \
 #       -e ANTHROPIC_API_KEY=... \
@@ -12,6 +12,15 @@
 #       -e ADF_RESOURCE_GROUP=... \
 #       -e ADF_FACTORY_NAME=... \
 #       agent-runtime-adf:0.1
+#
+# Run (recommended — pipes the whole repo-root .env into the container so
+# LangSmith, Anthropic, ADF, and everything else stays in sync):
+#   docker run --rm -p 8001:8000 --env-file .env agent-runtime-adf:0.1
+#
+# To enable LangSmith tracing, add these to .env (or pass via -e):
+#       LANGSMITH_TRACING=true
+#       LANGSMITH_API_KEY=lsv2_pt_...
+#       LANGSMITH_PROJECT=<your-project>
 
 FROM agent-runtime-base:0.1
 

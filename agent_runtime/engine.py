@@ -33,6 +33,9 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from typing import AsyncGenerator, Optional
 
+from langsmith import traceable
+from langsmith.run_helpers import get_current_run_tree
+
 from .core import config
 from .core.hooks import AbortRound, HookManager, HookResult, PreToolHook, _preview, validate_hitl
 from .core.loop import agent_loop, build_system_prompt
@@ -156,10 +159,31 @@ class _RegistryConfirmHook(PreToolHook):
         self.reason = ""
 
     def run(self, name: str, args: dict) -> HookResult:
+        # Non-HITL tools: short-circuit without creating a span so the
+        # LangSmith UI stays free of empty hitl_confirm runs under every
+        # tool:<name> parent.
         if name not in self.confirm_tools:
             return HookResult.SKIP
+        return self._traced_confirm(name, args)
 
+    @traceable(run_type="chain", name="hitl_confirm")
+    def _traced_confirm(self, name: str, args: dict) -> HookResult:
+        """HITL wait wrapped as a child span. Records tool, args, request_id,
+        wait duration, and terminal result (allow/deny/timeout/cancelled)."""
+        rt = get_current_run_tree()
         req_id, slot = self._registry.open(self._trace_id, name)
+        start = time.time()
+
+        if rt is not None:
+            rt.add_metadata({
+                "request_id":   req_id,
+                "tool_name":    name,
+                "tool_args":    args,
+                "trace_id":     self._trace_id,
+                "timeout_sec":  config.HITL_TIMEOUT,
+                "preview":      _preview(name, args),
+                "status":       "waiting",
+            })
 
         if self._on_event:
             self._on_event({
@@ -170,27 +194,56 @@ class _RegistryConfirmHook(PreToolHook):
                 "preview": _preview(name, args),
             })
 
-        # Block this agent thread on its own Event. Other chats are unaffected
-        # because each has its own thread + its own slot.
         signaled = slot.event.wait(timeout=config.HITL_TIMEOUT)
+        wait_ms = int((time.time() - start) * 1000)
+
+        def _tag(outcome: str):
+            if rt is not None:
+                rt.add_metadata({"result": outcome, "wait_ms": wait_ms})
 
         if not signaled:
-            # Timeout — clean up the slot we own and abort the round.
             self._registry.discard(req_id)
             self.reason = f"HITL timeout ({config.HITL_TIMEOUT}s)"
+            _tag("timeout")
             raise AbortRound(self.reason)
 
         if slot.result is True:
+            _tag("allow")
             return HookResult.ALLOW
 
-        # result is False (denied) or None (cancelled by SSE disconnect).
-        # SSE-disconnect → no client to receive further events, so abort.
-        # Explicit deny → continue the round so the LLM sees the rejection.
         if slot.result is None:
             self.reason = "HITL cancelled (client disconnected)"
+            _tag("cancelled")
             raise AbortRound(self.reason)
+
         self.reason = "User rejected"
+        _tag("deny")
         return HookResult.DENY
+
+
+# ── LangSmith parent span ──────────────────────────────────────────────────
+
+def _is_uuid(s: Optional[str]) -> bool:
+    """True when s parses as a UUID (accepts both hex and dashed forms)."""
+    if not s:
+        return False
+    try:
+        uuid.UUID(s)
+        return True
+    except (ValueError, AttributeError):
+        return False
+
+
+@traceable(run_type="chain", name="agent_round")
+def _traced_agent_round(messages, system, tracker, on_event):
+    """One agent round as a LangSmith parent run.
+
+    No-op wrapper when LANGSMITH_TRACING is off — the decorator short-circuits
+    and agent_loop runs exactly as before. When on, every wrap_anthropic LLM
+    call, every @traceable tool span, and every HITL confirm span nests under
+    this parent automatically via LangSmith's contextvar run tree.
+    """
+    agent_loop(messages, system, tracker, on_event=on_event)
 
 
 # ── Engine ─────────────────────────────────────────────────────────────────
@@ -265,6 +318,7 @@ class AgentEngine:
         self,
         messages: list,
         trace_id: Optional[str] = None,
+        conversation_id: Optional[str] = None,
     ) -> AsyncGenerator[EngineEvent, None]:
         """Run one agent round over the supplied message history.
 
@@ -276,6 +330,10 @@ class AgentEngine:
             trace_id: identifier for this in-flight stream. Used to scope
                       HITL confirm requests so SSE disconnects only cancel
                       this trace's pending confirms. Auto-generated if omitted.
+            conversation_id: optional frontend-owned identifier that spans
+                      multiple rounds of the same chat thread. Forwarded to
+                      LangSmith as session_id metadata so the Threads view
+                      groups all rounds of this conversation together.
         """
         if trace_id is None:
             trace_id = uuid.uuid4().hex
@@ -303,11 +361,28 @@ class AgentEngine:
         todo = Todo()
         tracker = TokenTracker()
 
+        # LangSmith metadata — session_id groups rounds into a Thread in the
+        # LangSmith UI; trace_id pinpoints the single round; agent_name lets
+        # us filter by container. No-op when LANGSMITH_TRACING is off.
+        langsmith_extra = {
+            "metadata": {
+                "session_id":      conversation_id,
+                "conversation_id": conversation_id,
+                "trace_id":        trace_id,
+                "agent_name":      config.AGENT_NAME,
+                "model":           config.MODEL,
+            },
+            "run_id": trace_id if _is_uuid(trace_id) else None,
+        }
+
         def _run_sync():
             tools_mod.set_thread_hooks(hooks)
             tools_mod.set_thread_todo(todo)
             try:
-                agent_loop(messages, self.system, tracker, on_event=on_event)
+                _traced_agent_round(
+                    messages, self.system, tracker, on_event,
+                    langsmith_extra=langsmith_extra,
+                )
             except Exception as e:
                 logger.exception("agent_loop crashed")
                 loop.call_soon_threadsafe(queue.put_nowait, Error(message=str(e)))

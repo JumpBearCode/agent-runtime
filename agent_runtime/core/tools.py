@@ -4,6 +4,8 @@ import subprocess
 import threading
 from pathlib import Path
 
+from langsmith import traceable
+
 from . import config
 
 # Module-level wiring set by the engine at startup.
@@ -135,18 +137,31 @@ def rebuild_tools():
         TOOLS.extend(MCP.tool_schemas)
 
 
-def dispatch_tool(name: str, args: dict) -> str:
-    """Dispatch a tool call — runs hooks, then routes to handler or MCP."""
+@traceable(run_type="tool")
+def _traced_dispatch(name: str, args: dict) -> str:
+    """Inner dispatch, wrapped as a LangSmith tool span.
+
+    HITL lives inside this span so the hitl_confirm child run nests under
+    tool:<name> in the LangSmith UI (visually grouping the gate with the
+    tool it gates). The caller overrides the span name at call time via
+    langsmith_extra={"name": f"tool:{name}"}.
+    """
     hooks = _active_hooks()
     if hooks:
         decision = hooks.before_tool(name, args)
         if not decision.allowed:
             return f"Blocked: {decision.reason}"
-    # Check built-in first
     handler = TOOL_HANDLERS.get(name)
     if handler:
         return handler(**args)
-    # Check MCP
     if MCP and name in MCP.tool_names:
         return MCP.call_tool(name, args)
     return f"Unknown tool: {name}"
+
+
+def dispatch_tool(name: str, args: dict) -> str:
+    """Dispatch a tool call — runs hooks, then routes to handler or MCP."""
+    return _traced_dispatch(
+        name, args,
+        langsmith_extra={"name": f"tool:{name}", "metadata": {"tool_name": name}},
+    )

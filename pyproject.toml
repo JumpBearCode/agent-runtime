@@ -9,6 +9,7 @@ dependencies = [
     "sse-starlette>=2.0",
     "mcp>=1.26.0",
     "python-dotenv>=1.0.0",
+    "langsmith>=0.2.0",
 ]
 
 [project.optional-dependencies]

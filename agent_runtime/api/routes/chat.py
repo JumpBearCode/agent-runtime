@@ -18,8 +18,9 @@ async def chat(request: Request):
 
     Request body:
         {
-          "messages":  [...],                    # full history; last item must be a user message
-          "trace_id":  "optional-uuid"           # scopes HITL confirms; auto-generated if omitted
+          "messages":        [...],                    # full history; last item must be a user message
+          "trace_id":        "optional-uuid",          # scopes HITL confirms; auto-generated if omitted
+          "conversation_id": "optional-frontend-id"    # groups multi-turn rounds into a LangSmith thread
         }
 
     Response: text/event-stream — see api.schemas for event shapes.
@@ -27,6 +28,7 @@ async def chat(request: Request):
     body = await request.json()
     messages = body.get("messages")
     trace_id = body.get("trace_id")
+    conversation_id = body.get("conversation_id")
 
     if not isinstance(messages, list) or not messages:
         raise HTTPException(status_code=400, detail="`messages` must be a non-empty array")
@@ -36,7 +38,9 @@ async def chat(request: Request):
     engine = request.app.state.engine
 
     async def event_stream():
-        async for event in engine.chat_stream(messages, trace_id=trace_id):
+        async for event in engine.chat_stream(
+            messages, trace_id=trace_id, conversation_id=conversation_id,
+        ):
             yield {
                 "event": event.type,
                 "data": json.dumps(event.to_dict(), ensure_ascii=False),

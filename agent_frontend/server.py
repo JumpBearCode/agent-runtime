@@ -227,7 +227,11 @@ async def chat(session_id: str, request: Request):
         async with http.stream(
             "POST",
             target,
-            json={"messages": messages, "trace_id": trace_id},
+            json={
+                "messages": messages,
+                "trace_id": trace_id,
+                "conversation_id": session_id,
+            },
             headers={"Accept": "text/event-stream"},
         ) as r:
             if r.status_code != 200:

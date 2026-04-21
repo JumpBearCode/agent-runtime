@@ -49,7 +49,18 @@ def _create_client():
     return Anthropic(base_url=os.getenv("ANTHROPIC_BASE_URL"))
 
 
+# LangSmith tracing — opt-in via env. When enabled, wrap the Anthropic client
+# so every messages.stream() call is auto-traced (inputs, outputs, tokens,
+# latency, cache metrics). @traceable spans in engine/tools/hooks become
+# child runs under the wrapped LLM calls automatically.
+LANGSMITH_ENABLED = os.getenv("LANGSMITH_TRACING", "").lower() == "true"
+
 client = _create_client()
+if LANGSMITH_ENABLED:
+    from langsmith.wrappers import wrap_anthropic
+    client = wrap_anthropic(client)
+    logger.info("LangSmith tracing enabled (project=%s)",
+                os.getenv("LANGSMITH_PROJECT", "default"))
 MODEL = os.environ["MODEL_ID"]
 AGENT_NAME = os.getenv("AGENT_NAME", "")
 
