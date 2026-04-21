@@ -11,3 +11,9 @@ everything-claude-code
 deepagents
 .sessions
 .agent_settings
+agent-frontend-v2
+# agent_frontend local SQLite
+agent_frontend.db
+*.db-journal
+*.db-wal
+*.db-shm

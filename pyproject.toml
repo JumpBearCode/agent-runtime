@@ -20,16 +20,31 @@ test = [
     "asgi-lifespan>=2.1",     # async lifespan trigger for AsyncClient + ASGITransport
 ]
 
+# The web UI ships as a sibling package (agent_frontend) at repo root. It's
+# an optional extra so runtime-only deploys stay lean.
+# Install with: uv sync --extra frontend
+# Launch with:  uv run agent-web
+frontend = [
+    "httpx>=0.27",
+    "aiosqlite>=0.20",
+]
+# Add when using Postgres backend:
+# uv sync --extra frontend --extra frontend-postgres
+frontend-postgres = [
+    "asyncpg>=0.29",
+]
+
+[project.scripts]
+agent-web = "agent_frontend.run:main"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.uv.workspace]
-members = ["agent_frontend"]
-
-[tool.uv.sources]
-agent-runtime = { workspace = true }
-agent-frontend = { workspace = true }
+# Both packages ship in the same wheel — they're sibling Python packages at
+# the repo root, not a workspace with separate members.
+[tool.hatch.build.targets.wheel]
+packages = ["agent_runtime", "agent_frontend"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -337,6 +337,26 @@ details[open] .chevron-icon { transform: rotate(90deg); }
     padding: 10px 16px;
 }
 
+.agent-picker {
+    margin-left: auto;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    font-family: 'SF Mono', SFMono-Regular, Consolas, monospace;
+    color: var(--text-secondary);
+    background: var(--main-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    max-width: 240px;
+}
+
+.done-note {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #d97706;
+    font-family: 'SF Mono', SFMono-Regular, Consolas, monospace;
+}
+
 /* Per-message collapse indicator — attached to each assistant message at its
    top-left; clicking folds the message's tool/thinking/token blocks. */
 .collapse-indicator {
