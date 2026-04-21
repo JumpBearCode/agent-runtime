@@ -8,7 +8,9 @@
 > - 怎么往前推
 >
 > **状态**：基础架构完成，等待前端项目接入。后端跑得起来、能 stream、HITL 已通。
-> **相关文档**：[`doc/follow-ups.md`](follow-ups.md) — 已知遗留问题清单。
+> **相关文档**：
+> - [`doc/follow-ups.md`](follow-ups.md) — 已知遗留问题清单
+> - [`doc/storage.md`](storage.md) — 前端 session 持久化（SQLite / Postgres）的 schema 与取舍
 
 ---
 
