@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conversation — 0ad21bd9-cdda-483f-b7a2-b3fc854f6aa6</title>
+<style>
+:root { color-scheme: light dark; }
+* { box-sizing: border-box; }
+body {
+  font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", sans-serif;
+  max-width: 860px; margin: 0 auto; padding: 40px 24px 80px;
+  background: #fafaf7; color: #1a1a1a;
+}
+h1 { font-size: 22px; margin: 0 0 6px; font-weight: 600; }
+h1 code { font-size: 15px; color: #666; background: transparent; padding: 0; font-weight: 400; }
+h2, h3, h4 { margin-top: 14px; }
+.meta {
+  background: #fff; border: 1px solid #e8e4dc; border-radius: 8px;
+  padding: 10px 14px; font-size: 13px; margin: 10px 0 28px; color: #555;
+}
+.meta-row { display: flex; gap: 10px; padding: 2px 0; }
+.meta-row .k { color: #999; min-width: 100px; }
+.turn {
+  border: 1px solid #eae6dd; border-radius: 10px;
+  padding: 16px 20px; margin: 14px 0; background: #fff;
+  overflow-wrap: anywhere;
+}
+.turn.user { background: #eef5ff; border-color: #d8e4f8; }
+.turn-header {
+  display: flex; gap: 12px; font-size: 13px; color: #888;
+  margin-bottom: 12px; align-items: center; flex-wrap: wrap;
+}
+.role { font-weight: 600; }
+.role.user { color: #2b6cb0; }
+.role.assistant { color: #a65f1c; }
+.timestamp { color: #aaa; }
+.sidechain-tag {
+  background: #fef3c7; color: #92400e;
+  padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;
+}
+p { margin: 8px 0; }
+pre {
+  background: #f5f3ee; border: 1px solid #eae6dd;
+  padding: 10px 12px; border-radius: 6px; overflow-x: auto;
+  font: 13px/1.5 "SF Mono", Menlo, Consolas, "Courier New", monospace;
+  margin: 8px 0;
+}
+code {
+  font: 13px/1.5 "SF Mono", Menlo, Consolas, "Courier New", monospace;
+  background: #efece5; padding: 1px 5px; border-radius: 3px;
+}
+pre code { background: transparent; padding: 0; }
+details { margin: 10px 0; }
+details summary {
+  cursor: pointer; color: #888; font-size: 13px;
+  user-select: none; padding: 2px 0;
+}
+details summary:hover { color: #555; }
+details[open] summary { margin-bottom: 6px; }
+ul.tool-calls {
+  list-style: none; padding-left: 4px; margin: 8px 0;
+  border-left: 2px solid #ece8df;
+}
+ul.tool-calls li { padding: 3px 0 3px 10px; font-size: 14px; color: #555; }
+.tool-call { margin: 10px 0; }
+.tool-head { font-size: 13px; color: #666; margin-bottom: 4px; }
+.tool-result.error > summary { color: #b91c1c; }
+a { color: #1f6feb; text-decoration: none; }
+a:hover { text-decoration: underline; }
+hr { border: none; border-top: 1px solid #e8e4dc; margin: 18px 0; }
+.table-wrap { overflow-x: auto; margin: 12px 0; }
+table {
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.5;
+}
+th, td {
+  border: 1px solid #e5e2dc;
+  padding: 7px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+th {
+  background: #f5f3ee;
+  font-weight: 600;
+}
+tbody tr:nth-child(even) { background: #faf8f2; }
+th code, td code { font-size: 12.5px; }
+@media (prefers-color-scheme: dark) {
+  body { background: #0f141a; color: #e7e7e3; }
+  h1 code { color: #aaa; }
+  .meta { background: #1a2028; border-color: #2a3138; color: #aaa; }
+  .meta-row .k { color: #777; }
+  .turn { background: #171c22; border-color: #2a3138; }
+  .turn.user { background: #162033; border-color: #1e3358; }
+  .role.user { color: #7ab8ff; }
+  .role.assistant { color: #e2a062; }
+  .timestamp { color: #666; }
+  pre { background: #1b2128; border-color: #2a3138; }
+  code { background: #2a3138; color: #e7e7e3; }
+  ul.tool-calls { border-color: #2a3138; }
+  ul.tool-calls li { color: #aaa; }
+  a { color: #7ab8ff; }
+  hr { border-color: #2a3138; }
+  .sidechain-tag { background: #3d2f0a; color: #f5c56b; }
+  details summary { color: #888; }
+  details summary:hover { color: #bbb; }
+  .tool-result.error > summary { color: #f87171; }
+  th, td { border-color: #2a3138; }
+  th { background: #1b2128; }
+  tbody tr:nth-child(even) { background: #1a1f25; }
+}
+</style>
+</head>
+<body>
+<h1>Conversation — <code>0ad21bd9-cdda-483f-b7a2-b3fc854f6aa6</code></h1>
+<div class="meta">
+<div class="meta-row"><span class="k">mode</span><span>notes</span></div>
+<div class="meta-row"><span class="k">cwd</span><span>/Users/wqeq/Desktop/project/agent-runtime</span></div>
+<div class="meta-row"><span class="k">started</span><span>2026-04-21 23:43:13 UTC</span></div>
+<div class="meta-row"><span class="k">last activity</span><span>2026-04-22 03:49:10 UTC</span></div>
+<div class="meta-row"><span class="k">turns</span><span>42</span></div>
+<div class="meta-row"><span class="k">source</span><span>/Users/wqeq/.claude/projects/-Users-wqeq-Desktop-project-agent-runtime/0ad21bd9-cdda-483f-b7a2-b3fc854f6aa6.jsonl</span></div>
+</div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-21 23:43:13 UTC</span></div><p>你帮我想一想，我想做一个 potential 的 auth flow。</p>
+<p>目前这个 chat UI 未来肯定是接 Azure App Service 的 EasyAuth SSO，它会传用户的 application ID（或者说 client ID）以及 username、email 这些信息，可以通过在 header 信息里 parse 到。</p>
+<p>1. 在我的 agent runtime 里面，我该怎样把用户通过 SSO 进入 App 的这些 auth 信息，传到比方说 ADF agent 里头去呢？</p>
+<p>2. 如果用户决定换一个 container level 的 auth，比方说我通过 EasyAuth 进了 App Service，但在 container level 我想用另一个账号去 access 另一些数据。我理论上可以用一个 Device Flow，搞一个 Device URL 加上 Device Code，让用户自己去另一个窗口 authenticate。</p>
+<p>   我需要有这么一套 workflow，而且针对 container level，它可能有多个需要 login 的地方（比如 Snowflake 的 Device Login、ADO 的 Device Login 等）。我应该在什么地方像 hook 一样去 define 一个 JSON 或者其他插件式的东西？</p>
+<p>目前我有两个思路：<br>
+   (a) Either “bring your own login code” or “bring your own JSON”，让它必须去 auth 这几个服务。<br>
+   (b) 或者我把每一个服务（比如 Snowflake、Azure DevOps、Azure）的 Device Login workflow 都在我的 agent runtime 里面（或者其他地方）集中写好，当用户需要用的时候，就在一个 JSON 里 define 这个 agent 必须要用到这几个 authentication，然后再传进来。</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-21 23:43:21 UTC</span></div><p>先快速看一下 runtime 结构，这样我的建议能贴合你现在的代码。</p>
+<ul class="tool-calls"><li>⚙️ <code>ls /Users/wqeq/Desktop/project/agent-runtime</code> — List project root</li><li>⚙️ <code>ls /Users/wqeq/Desktop/project/agent-runtime/agent_runtime /Users/wqeq/Desktop/project/agent-runtime/agents</code> — List runtime and agents dirs</li><li>⚙️ <code>ls /Users/wqeq/Desktop/project/agent-runtime/agent_runtime/api /Users/wqeq/Desktop/project/agent-runtime/agent_runtime/c</code> — List subdirs</li><li>📖 Read <code>/Users/wqeq/Desktop/project/agent-runtime/agent_runtime/engine.py</code></li><li>⚙️ <code>ls /Users/wqeq/Desktop/project/agent-runtime/agent_runtime/api/routes /Users/wqeq/Desktop/project/agent-runtime/agents/a</code> — List routes and agent config</li><li>📖 Read <code>/Users/wqeq/Desktop/project/agent-runtime/agent_runtime/api/routes/chat.py</code></li><li>📖 Read <code>/Users/wqeq/Desktop/project/agent-runtime/agent_runtime/core/config.py</code></li><li>📖 Read <code>/Users/wqeq/Desktop/project/agent-runtime/agents/adf-agent/settings/mcp.json</code></li></ul></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-21 23:44:11 UTC</span></div><p>[Request interrupted by user]</p>
+<p>你不光要看 agent runtime，你还要看 @agents/ ，还有 @agent_frontend/</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-21 23:44:41 UTC</span></div><ul class="tool-calls"><li>⚙️ <code>ls -la /Users/wqeq/Desktop/project/agent-runtime/agents/adf-agent/mcp /Users/wqeq/Desktop/project/agent-runtime/agents/a</code> — List agent and frontend subdirs</li><li>📖 Read <code>/Users/wqeq/Desktop/project/agent-runtime/agents/adf-agent/mcp/adf_mcp_server.py</code></li><li>📖 Read <code>/Users/wqeq/Desktop/project/agent-runtime/agent_frontend/server.py</code></li><li>📖 Read <code>/Users/wqeq/Desktop/project/agent-runtime/agents/README.md</code></li></ul>
+<p>已看完 <code>agent_frontend/server.py</code>、<code>agents/adf-agent/mcp/adf_mcp_server.py</code> 和 <code>agents/README.md</code>。整个画面清楚了：frontend 是 SSE proxy + session 存储（已经留了 <code>_DEFAULT_USER_ID</code> 的坑位给后续 auth），runtime 是 stateless，MCP server 是 container 启动时就 spawn 的 long-lived subprocess，目前 ADF MCP 用 <code>DefaultAzureCredential</code> 吃 env var。两个关键约束会决定答案：<strong>MCP 是 process-level 的，不是 per-request 的</strong>；你的原则是 <strong>freeze runtime，重在 skills/agent 层</strong>。</p>
+<p><strong>Q1 — EasyAuth 身份如何下钻到 ADF agent</strong></p>
+<p>我会分两种用途分开回答，因为它们复杂度差了一个数量级：</p>
+<ul><li><strong>仅用于 audit / telemetry / 限额</strong>（我的推荐起点）：<code>agent_frontend/server.py</code> 里 parse <code>X-MS-CLIENT-PRINCIPAL-*</code> → 在 <code>/api/sessions/{sid}/chat</code> 转发时注入进 request body（比如 body 多一个 <code>user: {oid, email, app_id}</code>）→ runtime <code>chat.py</code> 解出来塞进 <code>ContextVar</code> → engine 作为 LangSmith metadata 和 log field 带走。MCP 根本不用知道是谁。数据权限仍由 container 的 managed identity 承担。改动面极小，完全不碰 MCP。</li><li><strong>真的要以用户身份 access ADF（act-as-user）</strong>：必须走 AAD <strong>On-Behalf-Of flow</strong> —— 用 EasyAuth 给你的 <code>X-MS-TOKEN-AAD-ACCESS-TOKEN</code> 去换 ADF scope 的 token，再传给 MCP。问题是 MCP 现在是 long-lived subprocess、<code>_get_client()</code> 还 cache 了 credential，per-request token 要么靠每次 tool 调用把 token 塞进 input（tool-invasive），要么改用 short-lived MCP（重）。这条路代价大，建议只在合规/数据隔离真的强制时才走。</li></ul>
+<p>Tradeoff：多数企业 chat UI 其实只要 (i)。(ii) 是个 Azure-idiomatic 但要 rework MCP 的大工程。我建议 MVP 就做 (i)，留 (ii) 的 hook。</p>
+<p><strong>Q2 — Container-level 二次 auth（Snowflake / ADO Device Flow）</strong></p>
+<p>你的 (a) 和 (b) 其实是同一张图的两端，<strong>分层</strong> 才是正解：</p>
+<ul><li><strong>Runtime 提供一个 generic primitive</strong>：就是把现在的 HITL 泛化成 &quot;pending user action&quot;。Device login 和 HITL confirm 结构同构 —— 都是 agent 线程 block 在一个 Event 上，runtime 通过 SSE 把 payload（device URL + user code）吐给 frontend，frontend 弹窗/新 tab，用户完成后通过一个 endpoint resolve 掉。你的 <code>_ConfirmRegistry</code> 改几行就能承载。</li><li><strong>login workflow 的具体实现住在 agent 层</strong>，不住 runtime。每个 agent image 自带一个 <code>auth.json</code>（或放进 <code>settings/</code>）声明它需要哪几家（<code>snowflake</code>、<code>ado</code>、<code>azure</code>），对应 provider 可以是一个 skill、一个小 MCP tool，或者一个 plugin 入口。runtime 不知道 Snowflake 长什么样。</li><li><strong>Token cache 共享一个 per-container 的 vault</strong>（文件或 Key Vault），key = <code>(user_id, provider)</code>，让多个 MCP 共用同一把 token，不要每次都 re-login。</li></ul>
+<p>所以不是纯 (a) 也不是纯 (b)：<strong>runtime 提供&quot;等待用户&quot;的 primitive + token cache 约定</strong>，<strong>agent 自带 provider 实现 + 声明 JSON</strong>。这样加一个新服务 = 新 provider module + <code>auth.json</code> 多一行，runtime 零改动 —— 跟你 &quot;moat 在 skills，freeze runtime&quot; 的思路一致。</p>
+<p>一个问题想先跟你对齐再动手：<strong>MVP 是 (i) audit-only 就够，还是你已经有合规要求必须 act-as-user？</strong> 这决定我要不要现在就给 Q2 的 primitive 设计留 token-injection 的口。</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-21 23:51:03 UTC</span></div><p>你写了这么多，我好像不是很明白你写了什么。我的要求很简单，如下：</p>
+<p>1. Azure SSO（Easy SSO）进来之后有一个 identity，这个 identity 我需要能下沉到 container level 里头去。</p>
+<p>2. 在 container level，我需要有一个 option 让用户可以去登录。<br>
+   (a) 因为 Azure 的 SSO 只是针对 Azure 的，万一用户还想 authenticate 别的服务（比方说 Snowflake 或 ADO），就需要另外的 auth workflow。Azure 的 SSO 可能无法作用于 ADO 或 Snowflake 的 SSO，所以需要支持 Device Code Login 等方式。<br>
+   (b) 还有一种可能性是 Azure 的 identity 到了 container 里面需要换号。假设一个用户有两个 Azure 账号：访问普通服务（normal service）时用普通账号；访问特权服务（privileged service）时需要切换到特权账号。这种情况下，即使同是 Azure 用户，也需要一个 option 在 container level 通过 device code login 重新 authenticate。这是另一种情况。</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-21 23:51:55 UTC</span></div><p>明白，我直接给方案。</p>
+<h2>Q1 — EasyAuth identity 下沉</h2>
+<p>数据流：</p>
+<pre><code>Browser → [EasyAuth injects X-MS-CLIENT-PRINCIPAL-*] → agent_frontend
+        → parse headers, 得到 {oid, email, app_id}
+        → 转发给 runtime 时放在 request body 里（或 X-Agent-User-* header）
+        → runtime /api/chat 读出来，塞 ContextVar
+        → engine.chat_stream 传给 tool 层
+        → MCP tool 调用时作为参数带下去</code></pre>
+<p>三个改动点：</p>
+<p>1. <code>agent_frontend/server.py</code> 的 chat proxy — 把 <code>_DEFAULT_USER_ID=&quot;local&quot;</code> 换成从 <code>X-MS-CLIENT-PRINCIPAL-NAME</code>/<code>X-MS-CLIENT-PRINCIPAL-ID</code> 解出来的真 identity，转发时加进 body 的 <code>user: {...}</code> 字段。<br>
+2. <code>agent_runtime/api/routes/chat.py</code> — 读 <code>user</code> 字段存 ContextVar。<br>
+3. MCP 这块有个坑：MCP server 是 container 启动时就 spawn 的 <strong>long-lived subprocess</strong>，不是 per-request 的。所以 user identity 没法通过 env var 自动带进去。最简做法：<strong>在 tool 调用时注入到 args</strong>，比如 engine 在 call MCP tool 前自动加一个 <code>_user: {...}</code> 字段，MCP server 里 tool 自己读。</p>
+<h2>Q2 — Container-level 二次 auth（Device Code）</h2>
+<p>你列的 (a) 和 (b) 其实是<strong>同一种机制，不同 provider</strong>：</p>
+<ul><li>别的服务（Snowflake/ADO）：各家自己的 OAuth device code endpoint</li><li>Azure 换号（普通 → 特权）：Azure AD 的 device code flow，换 scope 或 tenant</li></ul>
+<p><strong>我的推荐：你的方案 (b)，但做成两层 —— runtime 提供 generic plumbing，agent 用 JSON 声明需要哪些 provider。</strong></p>
+<pre><code>agents/adf-agent/settings/auth.json:
+{
+  &quot;providers&quot;: [
+    {&quot;name&quot;: &quot;azure-privileged&quot;, &quot;type&quot;: &quot;azure-device-code&quot;,
+     &quot;tenant&quot;: &quot;...&quot;, &quot;scope&quot;: &quot;https://management.azure.com/.default&quot;},
+    {&quot;name&quot;: &quot;snowflake&quot;,       &quot;type&quot;: &quot;snowflake-device-code&quot;,
+     &quot;account&quot;: &quot;xy12345.us-east-1&quot;},
+    {&quot;name&quot;: &quot;ado&quot;,             &quot;type&quot;: &quot;ado-device-code&quot;,
+     &quot;org&quot;: &quot;mycompany&quot;}
+  ]
+}</code></pre>
+<p>Runtime 端加一个 <code>core/auth.py</code>，内置 2–3 个 provider 实现（<code>azure-device-code</code>、<code>snowflake-device-code</code>、<code>ado-device-code</code>），<strong>复用现在的 HITL plumbing</strong>：</p>
+<ul><li>agent 需要某个 provider 的 token 时 → runtime 查 token cache → 没有就触发 device code flow</li><li>device code URL + user_code 通过 SSE 推给 frontend（就是现在 <code>confirm_request</code> event 的兄弟事件，比如 <code>auth_request</code>）</li><li>用户在新 tab 完成 login → runtime poll 到 token → cache 起来 → agent 线程解除阻塞</li><li>token cache 用 per-container 文件，key = <code>(user_id, provider_name)</code></li></ul>
+<p><strong>为什么选 (b) 而不是 (a)：</strong> Device code flow 是 OAuth2 标准 grant，不是业务 logic，写一次大家复用才合理。(a) BYO code 会让每个 agent 重复实现同一套协议。你的&quot;freeze runtime&quot;原则是指&quot;不往 runtime 加 business logic&quot;，device code plumbing 算 protocol 级基础设施，不违反。</p>
+<p><strong>逃生舱：</strong> 万一将来有个怪 provider 不符合标准 flow，留一个 <code>{&quot;type&quot;: &quot;custom&quot;, &quot;module&quot;: &quot;my_agent.auth.weird_login&quot;}</code> 的 escape hatch，那种情况下才走 BYO code。</p>
+<hr>
+<p>两个问题问你，确认方向：</p>
+<p>1. Q1 里 MCP 那步我说&quot;tool args 注入 <code>_user</code> 字段&quot;，这方案 OK 吗？还是你想走 per-user 独立 MCP subprocess（重，但隔离强）？<br>
+2. Q2 的 token cache 你希望放 container 本地文件，还是走 Key Vault / Redis 这种外部 store（多实例 scale-out 场景）？</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-21 23:55:28 UTC</span></div><p>这里面还有一个问题：假设我有 10 个用户，他们都能 SSO 进我的这个 Azure App Service。</p>
+<p>这一部分好处理，就是前端渲染。比如进来之后，我能通过 header 或者 email identity 看见“我是我”，别人也能看见“别人是别人”。我觉得这可能也好理解，就是谁进来就是谁。</p>
+<p>或者说 Azure 不是这样的？它也会有 race condition 吗？比如一个 App Service 的 instance，它在同一时间只能 serve 一个人的 identity，是这样吗？</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-21 23:55:59 UTC</span></div><p>不是这样的，没有 race condition。我解释一下，然后指出你真正需要注意的地方。</p>
+<h2>App Service 的并发模型</h2>
+<p>一个 App Service instance = 一个跑着你 web server 的进程（你的 case 是 uvicorn）。它<strong>同时 serve 所有 10 个用户</strong>，每个 HTTP 请求完全独立。</p>
+<ul><li>EasyAuth 是 <strong>per-request</strong> 注入 header，不是 per-instance。同一瞬间 instance 里可能有 10 个 in-flight 请求，每个带着各自用户的 <code>X-MS-CLIENT-PRINCIPAL-*</code>。</li><li>没有任何&quot;instance 锁定在某个用户身上&quot;的概念。Azure 不这么工作。</li><li>如果流量大到一个 instance 扛不住，App Service 会横向扩出更多 instance（scale-out），每个 instance 照样并发 serve 多人。</li></ul>
+<p>所以&quot;谁进来就是谁&quot;这个直觉是对的，但要加一句限定：<strong>前提是你的代码把 identity 当作 per-request 数据处理，而不是塞进进程级的全局变量。</strong></p>
+<h2>你真正要小心的地方（这个才是&quot;race condition&quot;真正会出现的场景）</h2>
+<p>看你现在的代码，有几个地方容易踩坑：</p>
+<p>1. <strong><code>agent_frontend/server.py:46</code> 的 <code>_DEFAULT_USER_ID = &quot;local&quot;</code></strong> — 这是模块级常量，所有请求共用。接 EasyAuth 时必须改成<strong>每个请求从 header 现解</strong>，不能缓存到模块全局。否则就真的会出现 A 用户看到 B 用户的 session。</p>
+<p>2. <strong>Runtime 的 <code>AgentEngine</code> 是进程级单例</strong>（<code>engine.py:251</code>，uvicorn worker 启动时 init 一次），里面的 <code>skill_loader</code>、<code>mcp</code>、<code>_executor</code> 是跨请求共享的 —— 这没问题，因为它们是<strong>无用户状态</strong>的。但将来加 token cache / user context 时，<strong>不能</strong>直接挂在 engine 实例上当普通属性，必须用 <code>dict[user_id, ...]</code> 或 ContextVar 这种按 user 切分的结构。</p>
+<p>3. <strong>MCP subprocess 的全局 <code>_client</code> 缓存</strong>（看 <code>adf_mcp_server.py:26-35</code>，<code>_get_client()</code> 把 <code>DataFactoryManagementClient</code> cache 成模块级 singleton）—— 这在今天&quot;整个 container 用一个 managed identity&quot;的模型下 OK，但如果 Q1 切到 act-as-user、每个请求用不同 token，这个 cache 就是 bug 源头：用户 A 的请求建了 client，用户 B 的请求会复用 A 的 credential。到那时要改成 <code>dict[user_id, client]</code> 或者干脆不 cache。</p>
+<p>4. <strong>Token cache（Q2）必须按 user 切分</strong>。key 一定是 <code>(user_id, provider)</code>，不是只有 <code>provider</code>，否则 10 个人共用一把 Snowflake token。</p>
+<h2>一句话总结</h2>
+<p>Azure 层面你不用担心 —— 并发是默认、天然的。你要盯的是<strong>你自己代码里任何&quot;模块级/进程级&quot;的东西</strong>，确保它要么无用户状态、要么按 user_id 分桶。</p>
+<p>现在的代码里 #1 和 #3 是存量风险点，#2 #4 是做 Q1/Q2 时要避免的新坑。要我把这几个地方改成 per-user 安全的结构吗？还是先把 Q1/Q2 的整体设计再对一轮？</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-21 23:59:00 UTC</span></div><p>对，这就是我担心的。</p>
+<p>如果你说在前端，谁 log in 就是谁，这个 identity 是跟 request 走的，那还好。那么在 container level 怎么算呢？</p>
+<p>假设第一个人的 identity 传到 container level，第二个人再往 container level 里头传的时候，我的这个 identity 它到底长什么样？而且目前看起来我的 MCP 和我的 auth 是粘在一起的，都是 default login。</p>
+<p>这就产生了一个问题：<br>
+1. 我把 username 传进来的时候，因为是 default login，身份就是我。<br>
+2. 另一个人进来，他就会覆盖掉我的 login，因为大家都用这种 default login。</p>
+<p>有什么办法能解决吗？</p>
+<p>我想的是，能不能把 MCP 的 tool call 和 auth shell 给 decouple 掉？是否存在一种方法，让 container level 的 auth 像 API 一样，是 by request level 的？</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-21 23:59:44 UTC</span></div><p>你诊断得完全对。问题的根源就是 <code>adf_mcp_server.py:26-35</code> 那个 module-level <code>_client</code> cache —— 它把 &quot;谁来 auth&quot; 冻结在了<strong>第一次调用</strong>的身份上，所有后续请求都复用这个 credential。这不是 MCP 本身的限制，是这个 MCP 写法的问题。</p>
+<p>你说的&quot;decouple MCP tool 和 auth shell&quot; —— <strong>这是正解，也完全可行</strong>。</p>
+<h2>思路：让 MCP 变成&quot;auth-less&quot;，auth 从外部注入</h2>
+<p>现在的模型（有问题）：</p>
+<pre><code>MCP subprocess 启动 → _client = DefaultAzureCredential()  ← 固化身份
+tool call → 用那个 cached client 干活</code></pre>
+<p>改成：</p>
+<pre><code>MCP subprocess 启动 → 什么 credential 都不建
+tool call(args, _auth_token=...) → 用传进来的 token 现建 client，用完就扔</code></pre>
+<p>MCP subprocess 变回<strong>纯无状态 Python 进程</strong>，跨用户共享没问题，因为它不再持有任何人的身份。</p>
+<h2>具体改动（三层）</h2>
+<p><strong>1. MCP server（<code>adf_mcp_server.py</code>）</strong> —— 删掉 <code>_client</code> singleton：</p>
+<pre><code class="lang-python"># 删掉 _client 全局和 _get_client()
+def _build_client(token: str) -&gt; DataFactoryManagementClient:
+    from azure.core.credentials import AccessToken
+    class _StaticCred:
+        def get_token(self, *scopes, **kw):
+            return AccessToken(token, expires_on=...)
+    return DataFactoryManagementClient(_StaticCred(), SUBSCRIPTION_ID)
+
+@mcp.tool(...)
+def list_pipelines(_auth_token: str) -&gt; list[...]:
+    client = _build_client(_auth_token)
+    ...</code></pre>
+<p>每个 tool 多一个 <code>_auth_token</code> 参数，fresh client 用完即弃。</p>
+<p><strong>2. Runtime（<code>agent_runtime/core/tools.py</code> 里 MCP 调用那一层）</strong> —— 注入逻辑：</p>
+<ul><li>每个请求从 ContextVar 读当前 user_id</li><li>从 token cache 查 <code>(user_id, &quot;azure&quot;)</code> 的 token</li><li>没有 → 触发 device code flow（或 OBO exchange）</li><li>有 → 在 call MCP tool 之前，自动把 <code>_auth_token</code> 塞进 args</li><li>对 LLM 不可见（不 advertise 在 tool schema 里），纯 runtime 层注入</li></ul>
+<p><strong>3. Token store</strong> —— <code>dict[(user_id, provider), TokenRecord]</code>，带 expiry，进程内就行（同一个 uvicorn worker 内所有请求共用）。</p>
+<h2>结果</h2>
+<ul><li>用户 A 请求：ContextVar=A → token cache 拿 A 的 token → 注入 → MCP 用 A 的身份跑</li><li><strong>同一瞬间</strong>用户 B 请求（同一个 MCP subprocess）：ContextVar=B → 拿 B 的 token → 注入 → MCP 用 B 的身份跑</li><li>互不污染，因为 MCP 不再自己 cache 任何 credential</li></ul>
+<p>MCP subprocess &quot;被共享&quot;不是问题，<strong>&quot;被共享的进程里缓存了身份&quot;才是问题</strong>。拆掉那个 cache，共享就是安全的。</p>
+<h2>Tradeoff</h2>
+<ul><li><strong>优点</strong>：干净、per-request 正确、不需要为每个用户起独立 subprocess</li><li><strong>代价</strong>：每次 tool call 要现建 SDK client（Azure SDK client 构建很轻，没事）；每个 MCP tool signature 多一个 <code>_auth_token</code> 参数（可以用装饰器批量处理，不用手写每个）</li></ul>
+<hr>
+<p>要不要我现在就动手改？具体会动三个地方：</p>
+<p>1. <code>adf_mcp_server.py</code> — 拆 <code>_client</code> cache，tool 改成接 <code>_auth_token</code><br>
+2. <code>agent_runtime/core/tools.py</code> — MCP 调用前注入 token 的 middleware<br>
+3. <code>agent_runtime/core/auth.py</code>（新文件）— token cache + provider 注册</p>
+<p>或者你想先只做一部分（比如只验证 MCP 改造，先硬编码 token 跑通），再接后面的 device code flow？</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 00:09:46 UTC</span></div><p>obo flow 怎么用，是从前端传到后端agent container时的identity吗？ 如果我 agent runtime 想单独用 device login 的话，那就单独走一遍 device login，然后就不用这个 OBO 了，对吗？</p>
+<p>为什么每一次这个 tool call 都要重新建这个 SDK client 呢？</p>
+<p>就不能有什么办法，一开始建立一个 client，然后让所有人进来了之后再直接用 token 吗？为什么每次要新建一个 agent？</p>
+<p>1. obo flow 怎么用，是从前端传到后端agent container时的identity吗？ 如果我 agent runtime 想单独用 device login 的话，那就单独走一遍 device login，然后就不用这个 OBO 了，对吗？</p>
+<p>2. 为什么每一次这个 tool call 都要重新建这个 SDK client 呢？</p>
+<p>就不能有什么办法，一开始建立一个 client，然后让所有人进来了之后再直接用 token 吗？为什么每次要新建一个 agent？</p>
+<p>3. Token 存在哪里呢？</p>
+<p>其实就是存在这个进程里面，每一个用户会绑一个 Token 在 Agent Runtime 里。比方说像 Dictionary 或者 Set 一样，然后程序调用的时候自己 parse</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 00:11:35 UTC</span></div><p>三个都是好问题，我一个一个回答。</p>
+<h2>1. OBO flow</h2>
+<p><strong>是的，OBO 就是用前端传下来的 identity</strong>。具体讲：</p>
+<p>EasyAuth 登录之后，会往 header 里塞一个 <code>X-MS-TOKEN-AAD-ACCESS-TOKEN</code> —— 这个 token 是 Azure AD 发给&quot;你这个 App Service&quot;的，scope 是你的 app。它<strong>不能</strong>直接用来调 ADF，因为 scope 不对。</p>
+<p>OBO flow 就是你拿着用户的这个 token，去 Azure AD 换一个新 token，scope 改成 <code>https://management.azure.com/.default</code>（ADF 的 scope）。换来的新 token 代表&quot;这个用户&quot;去访问 ADF。<strong>用户无感，不用再登录一次。</strong></p>
+<pre><code>User token (scope=my-app)  →  [你的后端 + app 的 client_secret 去换]
+                          →  New token (scope=ADF, 身份还是这个用户)</code></pre>
+<p><strong>Device login 和 OBO 是二选一的两条路</strong>：</p>
+<div class="table-wrap"><table><thead><tr><th></th><th>OBO</th><th>Device Login</th></tr></thead><tbody><tr><td>用户体验</td><td>无感</td><td>需要在新 tab 输 user code</td></tr><tr><td>前提</td><td>用户已通过 EasyAuth 登录</td><td>不需要</td></tr><tr><td>身份</td><td>继承 EasyAuth 的账号</td><td>可以是任何账号（包括换号场景 Q2-b）</td></tr><tr><td>典型用途</td><td>同一个 Azure 身份访问 Azure 下游服务</td><td>访问非 Azure 服务（Snowflake/ADO）或换号</td></tr></tbody></table></div>
+<p>所以你说得对：<strong>如果走 device login，就不需要 OBO</strong>。device login 拿到的 token scope 已经是目标服务的，直接能用。</p>
+<p>你的 Q2-b 场景（普通号 → 特权号）其实可以两种都做：</p>
+<ul><li>普通服务 → 用 OBO（无感，继承 SSO 身份）</li><li>特权服务 → 用 device login（强制用户显式切号，也是个安全特性）</li></ul>
+<h2>2. 为什么要重建 client？—— 其实不用</h2>
+<p>你的直觉完全正确，我上一条答案说&quot;fresh client 用完即弃&quot;是偷懒的写法。<strong>正确做法是：共享一个 client，只把 credential 做成&quot;动态的&quot;</strong>。</p>
+<p>Azure SDK 的 client 接一个 <code>credential</code> 对象，client 每次 call API 时会调 <code>credential.get_token()</code>。所以只要让那个 <code>get_token</code> 方法<strong>每次返回当前请求用户的 token</strong>就行了：</p>
+<pre><code class="lang-python"># MCP subprocess 启动时建一次，所有用户共用
+_credential = ContextualCredential()   # 见下
+_client = DataFactoryManagementClient(_credential, SUBSCRIPTION_ID)
+
+class ContextualCredential:
+    def get_token(self, *scopes, **kwargs):
+        # tool 调用时 runtime 会先把 token 塞进 thread-local
+        token, expiry = _current_token.token, _current_token.expiry
+        return AccessToken(token, expiry)
+
+@mcp.tool
+def list_pipelines(_auth_token: str, _expires_on: int):
+    _current_token.token = _auth_token
+    _current_token.expiry = _expires_on
+    try:
+        return list(_client.pipelines.list_by_factory(...))
+    finally:
+        _current_token.token = None   # 防泄漏</code></pre>
+<p>一个 client 服务所有用户，每次 tool call 之前先把 token 放进 thread-local，client 自己去 <code>get_token()</code> 的时候拿到的就是当前这个用户的 token。<strong>身份是 per-call 的，client 本身是共享的。</strong></p>
+<p>这样 SDK 的连接池、HTTP session 都能复用，也没有身份污染问题。</p>
+<p>（上一条答案我给出 &quot;fresh client 每次新建&quot; 的方案也能 work，但确实浪费。Azure SDK client 构造是微秒级的，不是瓶颈，但既然你问了，这个优雅方案更好。）</p>
+<h2>3. Token 存哪</h2>
+<p><strong>就是你说的，进程内 dict</strong>，在 <code>agent_runtime</code> 里 —— 不在 MCP subprocess 里，因为 MCP 是 per-container 的共享进程，不适合存用户数据。Runtime 是 uvicorn 进程，本来就要做 per-request 处理，是存 token 的正确位置。</p>
+<p>大概长这样：</p>
+<pre><code class="lang-python"># agent_runtime/core/auth.py
+@dataclass
+class TokenRecord:
+    token: str
+    expires_at: float   # unix timestamp
+    provider: str       # &quot;azure&quot;, &quot;snowflake&quot;, &quot;ado&quot;...
+
+_cache: dict[tuple[str, str], TokenRecord] = {}   # (user_id, provider) -&gt; record
+_lock = threading.Lock()
+
+def get_token(user_id: str, provider: str) -&gt; str | None:
+    with _lock:
+        rec = _cache.get((user_id, provider))
+    if rec and rec.expires_at &gt; time.time() + 60:   # 留 60s buffer
+        return rec.token
+    return None   # caller 需要触发 refresh / device login
+
+def put_token(user_id: str, provider: str, token: str, expires_at: float):
+    with _lock:
+        _cache[(user_id, provider)] = TokenRecord(token, expires_at, provider)</code></pre>
+<p>调用路径：</p>
+<pre><code>tool call 进来 → runtime 从 ContextVar 读 user_id
+              → get_token(user_id, &quot;azure&quot;)
+              → 有 token → 注入到 MCP tool args → 执行
+              → 没 token → 触发 device login / OBO → 拿到后 put_token → 再执行</code></pre>
+<h2>要注意的几点</h2>
+<ul><li><strong>进程重启 = token 丢失</strong>：用户得重新 login / 重做 OBO。对于短 session 的 chat 场景没问题。</li><li><strong>多 worker</strong>：uvicorn 跑多 worker 时每个 worker 有自己的 dict。如果同一个用户的请求被路由到不同 worker，第二个 worker 得重新取 token。可以接受（OBO 很快、device login 是 once-per-session）。</li><li><strong>多 instance App Service（scale-out）</strong>：同样问题放大。如果你 scale 到多实例，要么开 sticky session（简单），要么把 cache 换成 Redis/Key Vault（正经）。MVP 阶段 sticky session 够了。</li><li><strong>锁</strong>：dict 读写加 <code>threading.Lock</code>。因为 uvicorn 用 thread pool 跑 agent loop（你 engine 里的 <code>ThreadPoolExecutor</code>），多线程并发读写同一个 dict 理论上 CPython GIL 保护，但别赌，加锁是干净的。</li></ul>
+<hr>
+<p>方向对齐了我就开始动手，三个文件：<br>
+1. <code>agent_runtime/core/auth.py</code>（新）— token cache + Azure OBO + device login 三种 provider<br>
+2. <code>agent_runtime/core/tools.py</code> — MCP tool call middleware：从 ContextVar 拿 user，注入 token<br>
+3. <code>agents/adf-agent/mcp/adf_mcp_server.py</code> — 改 <code>ContextualCredential</code> 模式，删掉 <code>_client</code> 里的 <code>DefaultAzureCredential</code></p>
+<p>还有一个问题先对齐：<strong>EasyAuth 的 <code>X-MS-TOKEN-AAD-ACCESS-TOKEN</code> 怎么从 frontend 传到 runtime？</strong> 这是敏感数据，我建议放在<strong>转发请求的 header 里</strong>（比如 <code>X-Agent-User-Token</code>），不放 body —— body 可能被日志打出来。你同意吗？</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 00:41:54 UTC</span></div><p>@../generic-ai/opsagent2/flask_app.py  这里有一个非常 naive 的对 EasyOS 的结构，你觉得有些东西可以复用吗？这是 best practice 吗？</p>
+<p>@../generic-ai/opsagent2/flask_app.py  这里有一个非常 naive 的对 Easyauth 的解构，你觉得有些东西可以复用吗？这是 best practice 吗？</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 00:42:57 UTC</span></div><p>扫了一下，核心逻辑（<code>get_user_info</code> at 134-193）<strong>header 解析本身是对的</strong>，可以直接拿来用；但整体<strong>不是 best practice</strong>，有几处需要改。分开讲。</p>
+<h2>可以复用的部分</h2>
+<p>1. <strong>三个 header 的正确选择</strong>（155-157）—— <code>X-MS-CLIENT-PRINCIPAL-NAME</code> / <code>-ID</code> / <code>X-Ms-Client-Principal</code>，这就是 EasyAuth 标准字段。<br>
+2. <strong>base64 → JSON → 扫 claims 数组找 <code>typ==&#x27;name&#x27;</code></strong>（163-175）—— 这是 <code>X-Ms-Client-Principal</code> 这个 blob 唯一的正确解法，EasyAuth 就是把 claims 打包成 <code>[{typ, val}, ...]</code> 塞进 base64。<br>
+3. <strong>local dev bypass 的思路</strong>（145-151）—— 本地跑的时候用 env 里的假 identity，不然开发体验很差。这个 pattern 值得留。</p>
+<p>这三块基本可以抠出来放进我们的 <code>agent_frontend/server.py</code>，改几行就能用。</p>
+<h2>不是 best practice 的地方</h2>
+<p>1. <strong>少读了一个关键 header</strong>：<code>X-MS-TOKEN-AAD-ACCESS-TOKEN</code>。这份代码只解身份（who），没读 token（proof）。我们 Q1 要做 OBO flow 必须拿到这个 —— 这是这份代码最大的缺口。<br>
+2. <strong>没有签名验证</strong>（threat model 没讲清）。EasyAuth 保证：只有请求<strong>真的经过 EasyAuth middleware</strong> 才会有这些 header。但如果 container 暴露了非 EasyAuth 的路径（比如 side-car、内网直连），header 可以被伪造。生产环境严格做法是验 <code>X-MS-TOKEN-AAD-ID-TOKEN</code> 的 JWT 签名；务实做法是保证&quot;只有 EasyAuth 能打进来&quot;（App Service 层面配好），信任 header。这份代码两者都没做，也没解释为什么不做。<br>
+3. <strong>吞异常</strong>（174-175 <code>except Exception: pass</code>）。base64 解失败静默成功，<code>is_authenticated</code> 还可能返回 True（因为它只看 <code>user_id and principal_raw</code> 存在，不看解析成不成功）。应该 log warning，解析失败就 <code>is_authenticated=False</code>。<br>
+4. <strong>auth 和 storage mode 耦合</strong>（145, 154）。<code>get_user_info()</code> 的行为被 <code>CHAT_HISTORY_MODE</code> 控制 —— 这俩没关系，不该混。local bypass 应该是独立的 dev flag（<code>AUTH_DEV_MODE=1</code>），跟你存 Redis 还是 Postgres 无关。<br>
+5. <strong>每个路由里重复调</strong> <code>user_info = get_user_info()</code> → 手动提 <code>user_id</code>（305, 338, 358, 380, ...）。FastAPI/Flask 都有 dependency injection / before_request，不该手动重复。我们这边用 FastAPI，就应该做成 dependency，顺便塞 ContextVar，下游（engine / tool）直接读。<br>
+6. <strong>返回 dict 而不是 typed 对象</strong>。<code>user_info.get(&#x27;user_id&#x27;)</code> 散落全项目，任何 typo 都静默返回 None。用 dataclass 或 pydantic model。</p>
+<h2>给我们项目的具体方案</h2>
+<p>抠 #1/#2/#3 的解析逻辑，其余重写。<code>agent_frontend</code> 里我会加一个 <code>auth.py</code>：</p>
+<pre><code class="lang-python"># agent_frontend/auth.py
+@dataclass(frozen=True)
+class UserIdentity:
+    user_id: str          # oid, 稳定标识
+    principal_name: str   # email / UPN
+    display_name: str
+    aad_access_token: str | None   # 给 runtime 做 OBO 用
+    aad_id_token: str | None
+    is_authenticated: bool
+
+def parse_easyauth_headers(headers) -&gt; UserIdentity:
+    # 抠 flask_app.py 的解析逻辑，加上 X-MS-TOKEN-AAD-ACCESS-TOKEN
+    ...
+
+async def require_user(request: Request) -&gt; UserIdentity:
+    # FastAPI dependency，失败 raise 401
+    # dev mode 走 env var bypass（独立于 storage mode）
+    ...</code></pre>
+<p>然后 <code>server.py</code> 里所有路由签名多一个 <code>user: UserIdentity = Depends(require_user)</code>，把当前的 <code>_DEFAULT_USER_ID = &quot;local&quot;</code> 彻底干掉。转发给 runtime 时把 <code>aad_access_token</code> 放在 header（不是 body），runtime 端也写同构的 dependency + ContextVar。</p>
+<hr>
+<p>一句话总结：<strong>header 解析那 20 行能抄，架构别抄</strong>。要不要我现在按上面的结构把 <code>agent_frontend/auth.py</code> 写出来，顺手把 <code>_DEFAULT_USER_ID</code> 也替换掉？</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 00:57:08 UTC</span></div><p>2. 没有签名验证（threat model 没讲清）。EasyAuth 保证：只有请求真的经过 EasyAuth middleware 才会有这些 header。但如果 container 暴露了非 EasyAuth      <br>
+  的路径（比如 side-car、内网直连），header 可以被伪造。生产环境严格做法是验 X-MS-TOKEN-AAD-ID-TOKEN 的 JWT 签名；务实做法是保证&quot;只有 EasyAuth           <br>
+  能打进来&quot;（App Service 层面配好），信任 header。这份代码两者都没做，也没解释为什么不做。<br>
+这个怎么避免呢？ 我们的container，goal是既可以serve frontend，未来也能是一个service. 这怎么做呢 ？</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 00:58:27 UTC</span></div><p>这个问题的本质是：<strong>&quot;container 既被 EasyAuth 挡着的 UI 调，也被其他 service 直接调&quot;</strong>。两种流量形态不能走同一套&quot;信 header&quot;的逻辑，但可以走同一套<strong>验签</strong>的逻辑。</p>
+<h2>正解：别信 header，验 JWT</h2>
+<p><code>X-MS-CLIENT-PRINCIPAL-*</code> 是 EasyAuth 给你的<strong>便利信息</strong>，不是凭证。真正的凭证是 <strong>JWT access token / id token</strong> —— 它带 Azure AD 的签名，<strong>任何人都伪造不了</strong>（前提是 Azure AD 私钥没泄漏）。</p>
+<p>EasyAuth 实际上同时给你塞了两样：</p>
+<ul><li><code>X-MS-CLIENT-PRINCIPAL-*</code>（解好的 claims，方便但不能信）</li><li><code>X-MS-TOKEN-AAD-ID-TOKEN</code> / <code>X-MS-TOKEN-AAD-ACCESS-TOKEN</code>（原始 JWT，带签名）</li></ul>
+<p><strong>只用后者</strong>。这样不管流量从哪来，auth 逻辑都一样。</p>
+<h2>统一的 auth dependency（container 一份代码，两种流量通吃）</h2>
+<pre><code class="lang-python"># agent_runtime/api/auth.py
+from jwt import PyJWKClient, decode as jwt_decode
+
+TENANT_ID = os.environ[&quot;AAD_TENANT_ID&quot;]
+AUDIENCE  = os.environ[&quot;AAD_AUDIENCE&quot;]   # 你这个 app 的 client_id 或 API URI
+_jwks = PyJWKClient(
+    f&quot;https://login.microsoftonline.com/{TENANT_ID}/discovery/v2.0/keys&quot;,
+    cache_keys=True, lifespan=3600,
+)
+
+async def require_user(request: Request) -&gt; UserIdentity:
+    # 统一入口：Authorization: Bearer &lt;jwt&gt;
+    # - UI 流量：frontend 从 EasyAuth 的 X-MS-TOKEN-AAD-ID-TOKEN 拿出来，再以 Bearer 塞给 runtime
+    # - Service 流量：caller 自己带 Bearer token
+    auth = request.headers.get(&quot;Authorization&quot;, &quot;&quot;)
+    if not auth.startswith(&quot;Bearer &quot;):
+        raise HTTPException(401, &quot;missing bearer token&quot;)
+    token = auth[7:]
+
+    try:
+        key = _jwks.get_signing_key_from_jwt(token).key
+        claims = jwt_decode(
+            token, key,
+            algorithms=[&quot;RS256&quot;],
+            audience=AUDIENCE,
+            issuer=f&quot;https://login.microsoftonline.com/{TENANT_ID}/v2.0&quot;,
+        )
+    except Exception as e:
+        raise HTTPException(401, f&quot;invalid token: {e}&quot;)
+
+    return UserIdentity(
+        user_id=claims[&quot;oid&quot;],
+        principal_name=claims.get(&quot;preferred_username&quot;) or claims.get(&quot;upn&quot;, &quot;&quot;),
+        display_name=claims.get(&quot;name&quot;, &quot;&quot;),
+        aad_access_token=token,
+        is_authenticated=True,
+    )</code></pre>
+<p><strong>验 4 样</strong>：签名、<code>iss</code>（发行方是你的 tenant）、<code>aud</code>（受众是你这个 app）、<code>exp</code>（没过期）。缺一不可。</p>
+<h2>两种流量怎么走</h2>
+<p><strong>UI 流量</strong>（浏览器 → Front Door/App Service → EasyAuth → frontend → runtime）：</p>
+<pre><code>agent_frontend/server.py 做两件事：
+  1. 从 X-MS-TOKEN-AAD-ID-TOKEN 里读出 JWT（EasyAuth 给的）
+  2. 转发到 runtime 时，写成 Authorization: Bearer &lt;jwt&gt;
+
+agent_runtime 侧：require_user 验签 → 通过</code></pre>
+<p><strong>Service 流量</strong>（别的服务直接调 runtime）：</p>
+<pre><code>Caller 自己用 client_credentials / managed identity 去 Azure AD 拿 token（aud = runtime）
+  → Authorization: Bearer &lt;jwt&gt; 打给 runtime
+  → require_user 验签 → 通过</code></pre>
+<p><strong>攻击者伪造 <code>X-MS-CLIENT-PRINCIPAL-*</code> 打进来</strong>：</p>
+<pre><code>require_user 根本不看这些 header，只看 Bearer token
+  → 没 token / 假 token → 401</code></pre>
+<h2>三层防御（按投入排）</h2>
+<p>1. <strong>必做 — 应用层 JWT 验签</strong>（上面那段代码）。有了这个，就算别人绕过 EasyAuth 直接打到 container，也进不来。这是<strong>逻辑上</strong>的保护。<br>
+2. <strong>强烈建议 — 网络层限制</strong>（App Service Access Restrictions / Private Endpoint / VNet integration）。让 container <strong>物理上</strong>只接受来自 Azure Front Door / 特定 VNet 的流量。defense in depth。<br>
+3. <strong>可选 — &quot;Require Auth&quot; 模式</strong>。App Service 的 EasyAuth 有一个开关叫 &quot;Require authentication&quot;：未登录直接 302 到 AAD，不会走到你的 app。这是针对 UI 路径的硬门禁。对 service 路径你可以选择关掉 EasyAuth 或让它 pass-through。</p>
+<h2>这和之前讨论的怎么拼起来</h2>
+<p>之前说的 <code>UserIdentity</code> / OBO / token cache 全部不变，只是<strong>获取 identity 的入口</strong>从&quot;读 header&quot;升级成&quot;验 JWT&quot;：</p>
+<pre><code>旧：parse_easyauth_headers(headers) → UserIdentity
+新：validate_jwt(bearer_token)      → UserIdentity</code></pre>
+<p>下游的 ContextVar、token cache、MCP 注入、OBO flow —— 一模一样。</p>
+<h2>对你们现在的架构，我的具体建议</h2>
+<ul><li><code>agent_frontend</code>：做&quot;EasyAuth → Bearer&quot;的转换器。从 <code>X-MS-TOKEN-AAD-ID-TOKEN</code> 抠 JWT，转发给 runtime 时塞进 <code>Authorization</code> header。（frontend 自己要不要验签可选；它身后有 EasyAuth，验了是 defense in depth，不验也 OK，因为最终决定权在 runtime。）</li><li><code>agent_runtime</code>：实现上面的 <code>require_user</code> —— 这是<strong>真 gatekeeper</strong>。所有 <code>/api/*</code> 路由都挂这个 dependency。不管你是 UI 来的还是 service 来的，一律验签。</li><li><strong>网络</strong>：运维层面把 runtime 的 ingress 限制到 &quot;只有 frontend 和你的 service consumers 能打&quot;（App Service access restrictions），这是免费的 defense in depth。</li></ul>
+<p>这样同一个 container image 天然支持两种身份：UI 用户（身份来自 EasyAuth 转发）和 service caller（身份来自它自己的 managed identity / client credential），代码路径完全统一。</p>
+<hr>
+<p>一个细节需要你拍板：<strong>runtime 的 <code>AUDIENCE</code> 配成什么？</strong></p>
+<ul><li>选项 A：runtime 和 frontend 共用同一个 AAD app registration，<code>AUDIENCE</code> = frontend 的 client_id。简单，但 service-to-service caller 也得拿这个 audience 的 token，语义上不干净。</li><li>选项 B：runtime 注册自己的 AAD app，<code>AUDIENCE</code> = runtime 的 API URI（比如 <code>api://agent-runtime</code>）。frontend 转发前做一次 OBO 把 token 的 audience 换成 runtime。这是官方推荐，但多一步 OBO。</li></ul>
+<p>MVP 我建议走 A，跑通之后再升 B。你怎么看？</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 01:03:29 UTC</span></div><p>能不能解释一下，我从一个用户到 AAD Application，再到 Login，最后到我用 Login 的这个 Token 去 Visit Azure Service，帮我 Visualize 一下这个 Flow 是怎样的？</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 01:04:39 UTC</span></div><p>我用四张图把整个流程拆开。先给你建立几个核心概念，然后逐步走一遍。</p>
+<h2>角色介绍</h2>
+<pre><code>┌─────────────┐   ┌──────────────────┐   ┌─────────────────┐   ┌──────────────┐
+│   User      │   │   Azure AD       │   │  Your App       │   │ Azure Service│
+│  (browser)  │   │  (身份中心)       │   │  (App Service)  │   │  (ADF/Blob)  │
+└─────────────┘   └──────────────────┘   └─────────────────┘   └──────────────┘</code></pre>
+<p>还有一个隐身角色 —— <strong>AAD App Registration</strong>。它不是一台服务器，是 Azure AD 里的一条<strong>元数据记录</strong>，描述&quot;有这么一个 app 存在，它的 client_id 是 X，它接受哪些 scope，它的 redirect URI 是哪里&quot;。<strong>app registration 是 Azure AD 认识你这个 app 的凭据</strong>。</p>
+<hr>
+<h2>Phase 0：注册 AAD App（一次性，部署前做）</h2>
+<pre><code>   [你/运维]                    [Azure AD]
+     │                              │
+     │  &quot;我要注册一个 app&quot;           │
+     │─────────────────────────────▶│
+     │                              │─┐ 创建记录：
+     │                              │ │   client_id = abc-123...
+     │                              │ │   redirect_uri = https://myapp.com/.auth/login/aad/callback
+     │                              │ │   scopes = [openid, profile, email]
+     │                              │ │   可选：client_secret = xyz-secret
+     │                              │◀┘
+     │  &quot;好了，client_id = abc-123&quot; │
+     │◀─────────────────────────────│
+     │                              │
+     │  把 client_id + secret 配到  │
+     │  App Service 的 EasyAuth 里   │
+     ▼                              │</code></pre>
+<p>这一步做完之后，Azure AD 就&quot;认识&quot;你的 app 了。<strong>client_id 相当于 app 的身份证号</strong>，<strong>client_secret 相当于 app 的密码</strong>（证明自己确实是这个 app）。</p>
+<hr>
+<h2>Phase 1：用户登录（Authorization Code Flow with EasyAuth）</h2>
+<p>这是最关键的一张图。我把 11 步画完整：</p>
+<pre><code>User(browser)         EasyAuth          Azure AD           Your App
+     │                   │                  │                  │
+ ①   │  GET https://myapp.com/               │                  │
+     │──────────────────▶│                  │                  │
+     │                   │                  │                  │
+ ②   │  302 Redirect to login.microsoftonline.com              │
+     │  带着 ?client_id=abc-123&amp;redirect_uri=...&amp;scope=openid...│
+     │◀──────────────────│                  │                  │
+     │                                      │                  │
+ ③   │  GET login.microsoftonline.com/...   │                  │
+     │─────────────────────────────────────▶│                  │
+     │                                      │                  │
+ ④   │       [Azure AD 显示登录页，用户输密码/MFA]               │
+     │◀─────────────────────────────────────│                  │
+     │                                      │                  │
+ ⑤   │  POST 用户名 + 密码                   │                  │
+     │─────────────────────────────────────▶│                  │
+     │                                      │─┐ 验证通过        │
+     │                                      │ │ 生成 auth_code   │
+     │                                      │◀┘                │
+     │                                      │                  │
+ ⑥   │  302 Redirect 回 redirect_uri        │                  │
+     │  带着 ?code=AUTH_CODE                │                  │
+     │◀─────────────────────────────────────│                  │
+     │                   │                  │                  │
+ ⑦   │  GET myapp.com/.auth/login/aad/callback?code=AUTH_CODE   │
+     │──────────────────▶│                  │                  │
+     │                   │                  │                  │
+ ⑧   │                   │  POST /token     │                  │
+     │                   │  code=AUTH_CODE  │                  │
+     │                   │  + client_secret │                  │
+     │                   │─────────────────▶│                  │
+     │                   │                  │─┐ 验证 code 和    │
+     │                   │                  │ │ secret 都对    │
+     │                   │                  │◀┘                │
+ ⑨   │                   │  返回一堆 token：                    │
+     │                   │    id_token (OIDC, 身份证)           │
+     │                   │    access_token (aud=myapp)          │
+     │                   │    refresh_token                     │
+     │                   │◀─────────────────│                  │
+     │                   │─┐                │                  │
+     │                   │ │ 存进 EasyAuth   │                  │
+     │                   │ │ 的 token store  │                  │
+     │                   │◀┘                │                  │
+     │                   │                  │                  │
+ ⑩   │  302 回原始 URL + Set-Cookie (session)                   │
+     │◀──────────────────│                  │                  │
+     │                   │                  │                  │
+ ⑪   │  GET myapp.com/ (带 cookie)          │                  │
+     │──────────────────▶│                  │                  │
+     │                   │─┐ 根据 cookie 找 │                  │
+     │                   │ │ 到 token store │                  │
+     │                   │ │ 注入 header:    │                  │
+     │                   │ │ X-MS-TOKEN-AAD-ACCESS-TOKEN        │
+     │                   │ │ X-MS-CLIENT-PRINCIPAL-*            │
+     │                   │◀┘                │                  │
+     │                   │  forward to app  │                  │
+     │                   │─────────────────────────────────────▶│
+     │                   │                  │  [你的代码看到带 header 的请求]</code></pre>
+<p><strong>关键点：</strong></p>
+<ul><li><strong>EasyAuth 做的事</strong>：代替你实现了第 ②–⑩ 步这整套 OAuth 舞蹈。没它你得自己写。</li><li><strong>你的 app 从来没碰过密码</strong>。Azure AD 验密码，你只在 ⑪ 看到已认证的 header。</li><li><strong><code>access_token</code> 的 <code>aud</code> 是 <code>myapp</code></strong>（你的 app registration）。这就是为什么<strong>不能直接</strong>拿它去调 ADF —— audience 不对。要调 ADF 得走 Phase 3（OBO）换一个。</li></ul>
+<hr>
+<h2>Phase 2：直接用当前 token 调 Azure 服务（只有 aud 对的时候才行）</h2>
+<p>假设你调的服务就是自己 app registration 认的（罕见，但逻辑最直接）：</p>
+<pre><code>Your App                           Azure Service (aud=myapp)
+   │                                       │
+   │  从 header 拿 access_token             │
+   │─┐                                     │
+   │ │ token.aud == 这个服务的 audience     │
+   │◀┘                                     │
+   │                                       │
+   │  GET /some-resource                   │
+   │  Authorization: Bearer &lt;access_token&gt; │
+   │──────────────────────────────────────▶│
+   │                                       │─┐ 验证 token：
+   │                                       │ │  签名对吗？
+   │                                       │ │  aud 是我吗？
+   │                                       │ │  没过期吗？
+   │                                       │ │  有权限吗？(RBAC)
+   │                                       │◀┘
+   │  200 OK + 数据                         │
+   │◀──────────────────────────────────────│</code></pre>
+<p><strong>但对 ADF / Storage / Key Vault 这些，<code>aud</code> 不是你的 app</strong> —— 它们各自有自己的 audience（比如 ADF 是 <code>https://management.azure.com/</code>）。所以实际要走 Phase 3。</p>
+<hr>
+<h2>Phase 3：OBO — 拿用户 token 去换下游服务的 token</h2>
+<p>这是用户经常搞不清楚的一步。核心概念：<strong>一张 token 只能给一个 audience 用，换 audience = 换一张新 token</strong>。</p>
+<pre><code>Your App                Azure AD                     Azure Service (ADF)
+   │                       │                              │
+   │  当前持有：            │                              │
+   │  user_token (aud=myapp)                              │
+   │                       │                              │
+   │  &quot;我想代表这个用户     │                              │
+   │   调 ADF，帮我换一张&quot; │                              │
+   │                       │                              │
+   │  POST /token          │                              │
+   │  grant_type=urn:...:on-behalf-of                     │
+   │  assertion=user_token (aud=myapp)                    │
+   │  requested_scope=https://management.azure.com/.default│
+   │  client_id=myapp                                     │
+   │  client_secret=xyz                                   │
+   │──────────────────────▶│                              │
+   │                       │─┐ 验证三件事：                │
+   │                       │ │  1. user_token 签名对吗？  │
+   │                       │ │  2. myapp 有权代表用户吗？  │
+   │                       │ │     (API permissions 配置)  │
+   │                       │ │  3. user 在 ADF 上有权限吗？│
+   │                       │◀┘                            │
+   │                       │                              │
+   │  返回新 token：        │                              │
+   │  obo_token (aud=https://management.azure.com/)       │
+   │  sub = 原来那个用户的 oid                              │
+   │◀──────────────────────│                              │
+   │                       │                              │
+   │  GET adf/.../pipelines                               │
+   │  Authorization: Bearer &lt;obo_token&gt;                   │
+   │─────────────────────────────────────────────────────▶│
+   │                       │                              │─┐ 验证：
+   │                       │                              │ │  签名对 ✓
+   │                       │                              │ │  aud=management ✓
+   │                       │                              │ │  没过期 ✓
+   │                       │                              │ │  用户对这个 ADF 有权限吗？
+   │                       │                              │◀┘
+   │  200 OK + pipeline list                              │
+   │◀─────────────────────────────────────────────────────│</code></pre>
+<p><strong>所以 OBO 本质上就是</strong>：用户的旧 token 换一张 aud 不同的新 token，身份（<code>sub</code>/<code>oid</code>）不变，权限沿用那个用户的 RBAC。</p>
+<hr>
+<h2>一张图串起来全流程</h2>
+<pre><code>┌──────────────────────────────────────────────────────────────────────┐
+│                                                                      │
+│  [Phase 0 — 部署前]                                                   │
+│  你 ───注册──▶ AAD App (client_id=myapp, secret=xyz)                  │
+│                                                                      │
+│  ─────────────────────────────────────────────────────────────────── │
+│                                                                      │
+│  [Phase 1 — 用户首次访问]                                              │
+│  User ─▶ App ─▶ (重定向) ─▶ Azure AD (登录) ─▶ (回调带 code)           │
+│         App ◀─▶ Azure AD (用 code+secret 换 token)                    │
+│         User 拿到 session cookie，App 的 EasyAuth 手里有               │
+│             user_token (aud=myapp)                                   │
+│                                                                      │
+│  ─────────────────────────────────────────────────────────────────── │
+│                                                                      │
+│  [Phase 2 — 后续请求]                                                  │
+│  User ─▶ (带 cookie) ─▶ EasyAuth 注入 header ─▶ 你的 handler          │
+│         handler 看到：                                                │
+│             X-MS-CLIENT-PRINCIPAL-* (身份信息)                        │
+│             X-MS-TOKEN-AAD-ACCESS-TOKEN (user_token, aud=myapp)      │
+│                                                                      │
+│  ─────────────────────────────────────────────────────────────────── │
+│                                                                      │
+│  [Phase 3 — 调下游服务]                                                │
+│  handler ─▶ Azure AD (OBO: user_token → obo_token aud=ADF)            │
+│          ─▶ ADF (Bearer obo_token) ─▶ 以用户身份操作                   │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘</code></pre>
+<hr>
+<h2>几个反直觉的点，特别说一下</h2>
+<p>1. <strong>Token 不是一把钥匙开所有门</strong>。每张 token 有自己的 <code>aud</code>（audience），等于&quot;这张票只能进这个剧场&quot;。调 ADF 要 ADF 的 aud，调 Storage 要 Storage 的 aud，<strong>都得换</strong>。</p>
+<p>2. <strong>EasyAuth 不是验 token 的</strong>（虽然它也能），它本质是<strong>帮你跑完 OAuth 流程、帮你存 token、帮你注 header</strong>。验 token（防伪造）是下游服务做的事 —— 所以你的 runtime 自己也要验。</p>
+<p>3. <strong>client_secret 只有 app 知道</strong>。用户永远不接触。它是 app 向 AAD 证明&quot;我是那个 app&quot;的凭证。OBO 需要它，因为 AAD 要确认是&quot;那个正版 app&quot;在代用户问。</p>
+<p>4. <strong>刷新 token（refresh_token）在这儿没画出来</strong>，但它的用途是：user_token 过期（typically 1 小时）之后，app 用 refresh_token 去 AAD 静默换新的，不用打扰用户再登一次。EasyAuth 自动做这事。</p>
+<hr>
+<p>回到你的项目，想明白这张图之后，你的设计就清晰了：</p>
+<ul><li><strong>agent_frontend</strong>：坐在 Phase 2 的位置，从 header 读 <code>X-MS-TOKEN-AAD-ACCESS-TOKEN</code>，这是 <code>user_token (aud=myapp)</code>。</li><li><strong>agent_runtime</strong>：收到 frontend 转发的 <code>user_token</code>，做两件事：</li><li><strong>验签</strong>（不管 token 从哪来）</li><li><strong>OBO 换 aud=ADF 的 token</strong>，交给 MCP 用</li><li><strong>device login 场景</strong>：是另一套 Phase 1 的变体，直接从 Azure AD 拿 aud=ADF 的 token，跳过了 OBO。</li></ul>
+<p>要我接着把 OBO 那一步的具体代码也写出来吗？或者你想先在这张图的某一步再展开？</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 02:27:47 UTC</span></div><p>核心流程：<br>
+1. 用户先通过 EasyAuth 进来。<br>
+2. 对于 Azure 而言，EasyAuth 可以通过 OBO（On-Behalf-Of）模式下沉到 container runtime。<br>
+3. 在 container runtime 的 agents level，你可以 define 需要的 auth。<br>
+4. 我们 program 一个 centralized 的 auth flow，提供 Snowflake 和 Azure 的 device logging。<br>
+5. Container-level 可以去 overwrite 之前的 OBO（如果是 Azure 的话）。</p>
+<p>最后一点需求：<br>
+我需要这个 auth 和 MCP 是完全 decoupled 的。Auth 这个模块我甚至不想放在 agents level，而是想放在 agent runtime 里，或者甚至独立于 agent runtime 和 frontend，在 agents folder 里单独做一个 auth 模块。</p>
+<p>你觉得呢？我觉得用户只需要在 settings 里提供 auth.json，然后 container 就知道它可以 call 哪些 device flow 去 overwrite 或者 login。<br>
+你觉得我的这个认知对吗？</p>
+<p>总结一下我们的设计，然后告诉我该改哪里，我想 review 一下。<br>
+核心流程：<br>
+1. 用户先通过 EasyAuth 进来。<br>
+2. 对于 Azure 而言，EasyAuth 可以通过 OBO（On-Behalf-Of）模式下沉到 container runtime。<br>
+3. 在 container runtime 的 agents level，你可以 define 需要的 auth。<br>
+4. 我们 program 一个 centralized 的 auth flow，提供 Snowflake 和 Azure 的 device logging。<br>
+5. Container-level 可以去 overwrite 之前的 OBO（如果是 Azure 的话）。</p>
+<p>最后一点需求：<br>
+我需要这个 auth 和 MCP 是完全 decoupled 的。Auth 这个模块我甚至不想放在 agents level，而是想放在 agent runtime 里，或者甚至独立于 agent runtime 和 frontend，在 agents folder 里单独做一个 auth 模块。</p>
+<p>你觉得呢？我觉得用户只需要在 settings 里提供 auth.json，然后 container 就知道它可以 call 哪些 device flow 去 overwrite 或者 login。<br>
+你觉得我的这个认知对吗？</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 02:29:39 UTC</span></div><p>你的认知基本对，90% 是对的。有两处措辞我要校正，然后给你完整的改动清单。</p>
+<h2>先校正两个措辞问题</h2>
+<p><strong>&quot;EasyAuth 通过 OBO 下沉到 container runtime&quot;</strong> —— 不准确。EasyAuth 和 OBO 是两件事：</p>
+<ul><li>EasyAuth 做的：跑完登录舞蹈 → 把 <strong>user_token (aud=myapp)</strong> 和身份 claims 交给你</li><li>OBO 做的：在 runtime 里，<strong>用那个 user_token 去换</strong>一张 aud=ADF 的新 token</li><li>&quot;下沉到 runtime&quot; = frontend 把 EasyAuth 拿到的 user_token 以 <code>Authorization: Bearer</code> 转发给 runtime。<strong>OBO 是 runtime 自己发起的，不是 EasyAuth 做的</strong>。</li></ul>
+<p><strong>&quot;在 agents level define auth&quot;</strong> 跟你最后一句&quot;auth 不放 agents level&quot;看起来矛盾，其实不矛盾 —— 你的真实意思是：<strong>agent 用 JSON 声明需要哪些 auth，但实现代码不在 agent 里</strong>。这是对的，也是应有的分工：</p>
+<pre><code>agents/adf-agent/settings/auth.json   ← 声明（who needs what）
+auth/                                   ← 实现（how to get tokens）</code></pre>
+<h2>推荐的 module 结构</h2>
+<p>你问&quot;放 runtime 还是独立模块&quot;，我强烈推荐<strong>独立的 top-level <code>auth/</code> 包</strong>，peer of runtime 和 frontend：</p>
+<pre><code>agent-runtime/
+├── agent_frontend/      ← 用 auth 解 EasyAuth header、转发 Bearer
+├── agent_runtime/       ← 用 auth 验 JWT、做 OBO、注入 token
+├── auth/                ← ★ 新建，纯逻辑，不依赖 runtime/frontend
+│   ├── identity.py      ← UserIdentity dataclass + JWT 验签
+│   ├── easyauth.py      ← 解 X-MS-* headers → UserIdentity
+│   ├── providers/       ← 各家 auth provider 的实现
+│   │   ├── azure_obo.py
+│   │   ├── azure_device.py
+│   │   ├── snowflake_device.py
+│   │   └── ado_device.py
+│   ├── cache.py         ← dict[(user_id, provider), TokenRecord] + Lock
+│   └── config.py        ← 加载 auth.json
+└── agents/
+    └── adf-agent/
+        └── settings/
+            ├── mcp.json
+            ├── HITL.json
+            └── auth.json     ← ★ 新文件，声明需求</code></pre>
+<p><strong>为什么独立包而不是塞进 runtime</strong>：</p>
+<p>1. <strong>frontend 也需要用</strong>（解 EasyAuth header），两边都 import 同一份比重复写好<br>
+2. <strong>可测试性</strong>：auth 是纯函数逻辑，单独 pytest 不用起 FastAPI<br>
+3. <strong>可替换性</strong>：未来要换 OIDC / Okta，改一个包，不动 runtime<br>
+4. 符合你&quot;freeze runtime&quot;的原则 —— runtime 不该因为加个新 auth provider 就改</p>
+<h2>auth.json schema（给用户写的）</h2>
+<pre><code class="lang-json">{
+  &quot;providers&quot;: {
+    &quot;azure&quot;: {
+      &quot;mode&quot;: &quot;obo&quot;,
+      &quot;scope&quot;: &quot;https://management.azure.com/.default&quot;
+    },
+    &quot;azure-privileged&quot;: {
+      &quot;mode&quot;: &quot;device-code&quot;,
+      &quot;authority&quot;: &quot;https://login.microsoftonline.com/{tenant}&quot;,
+      &quot;scope&quot;: &quot;https://management.azure.com/.default&quot;,
+      &quot;client_id&quot;: &quot;...&quot;
+    },
+    &quot;snowflake&quot;: {
+      &quot;mode&quot;: &quot;device-code&quot;,
+      &quot;account&quot;: &quot;xy12345.us-east-1&quot;,
+      &quot;scope&quot;: &quot;session:role:ANALYST&quot;
+    }
+  },
+  &quot;mcp_bindings&quot;: {
+    &quot;adf&quot;: &quot;azure&quot;
+  }
+}</code></pre>
+<p><strong>两个字段的分工</strong>：</p>
+<ul><li><code>providers</code> = 这个 agent 能用哪些身份（定义 &quot;how to get each token&quot;）</li><li><code>mcp_bindings</code> = 哪个 MCP server 默认用哪个 provider</li><li>用户&quot;切号&quot;场景：runtime 层面提供一个 tool <code>switch_identity(provider=&quot;azure-privileged&quot;)</code>，切完后续 ADF 调用就用新 token 覆盖 OBO 得到的</li></ul>
+<h2>具体改动清单（按文件 review）</h2>
+<h3>新增</h3>
+<div class="table-wrap"><table><thead><tr><th>文件</th><th>职责</th></tr></thead><tbody><tr><td><code>auth/identity.py</code></td><td><code>UserIdentity</code> dataclass、<code>validate_jwt(token) -&gt; UserIdentity</code></td></tr><tr><td><code>auth/easyauth.py</code></td><td><code>parse_easyauth_headers(headers) -&gt; UserIdentity</code>（用 opsagent2 那 20 行改）</td></tr><tr><td><code>auth/cache.py</code></td><td>进程内 dict + threading.Lock，<code>get/put/invalidate</code></td></tr><tr><td><code>auth/providers/azure_obo.py</code></td><td>OBO exchange：<code>exchange(user_token, scope) -&gt; access_token</code></td></tr><tr><td><code>auth/providers/azure_device.py</code></td><td>Device code flow state machine</td></tr><tr><td><code>auth/providers/snowflake_device.py</code></td><td>同上，Snowflake</td></tr><tr><td><code>auth/providers/ado_device.py</code></td><td>同上，ADO</td></tr><tr><td><code>auth/config.py</code></td><td><code>load_auth_config(path) -&gt; AuthConfig</code></td></tr><tr><td><code>agents/adf-agent/settings/auth.json</code></td><td>每个 agent 一份，声明式</td></tr></tbody></table></div>
+<h3>修改</h3>
+<div class="table-wrap"><table><thead><tr><th>文件</th><th>改什么</th></tr></thead><tbody><tr><td><code>agent_frontend/server.py:46</code></td><td>删 <code>_DEFAULT_USER_ID</code>，所有 route 加 <code>user: UserIdentity = Depends(require_user)</code></td></tr><tr><td><code>agent_frontend/server.py:225</code></td><td>chat proxy 转发时加 <code>Authorization: Bearer &lt;user.aad_access_token&gt;</code> header</td></tr><tr><td><code>agent_runtime/api/routes/chat.py</code></td><td>加 auth dependency：验 JWT → set ContextVar</td></tr><tr><td><code>agent_runtime/api/routes/confirm.py</code></td><td>同上（HITL 也要知道是谁）</td></tr><tr><td><code>agent_runtime/api/routes/meta.py</code></td><td>同上（但可以考虑 <code>/api/info</code> 不需要 auth，方便健康检查）</td></tr><tr><td><code>agent_runtime/engine.py:316-408</code></td><td><code>chat_stream</code> 接收 <code>UserIdentity</code>，传给 <code>_run_sync</code>；agent 线程里把 ContextVar 复制过去（因为跨了 ThreadPoolExecutor 边界）</td></tr><tr><td><code>agent_runtime/core/tools.py</code></td><td>MCP tool call 前 middleware：读 ContextVar 拿 user → 查 auth config 找 provider → <code>auth.get_token(user, provider)</code> → 注入 <code>_auth_token</code> 进 args</td></tr><tr><td><code>agent_runtime/core/config.py</code></td><td>读 <code>auth.json</code>（新增 <code>resolve_auth_config()</code>）</td></tr><tr><td><code>agent_runtime/engine.py:_ConfirmRegistry</code></td><td>泛化或 parallel：device flow 事件用同构的 pending-action 机制推给 frontend</td></tr><tr><td><code>agents/adf-agent/mcp/adf_mcp_server.py:26-35</code></td><td>删掉 <code>_client = DefaultAzureCredential()</code>，改 <code>ContextualCredential</code> + thread-local token</td></tr><tr><td><code>agents/adf-agent/mcp/adf_mcp_server.py:57, 81, ...</code></td><td>每个 <code>@mcp.tool</code> 加隐式 <code>_auth_token</code> 参数（可以用装饰器批量处理）</td></tr><tr><td><code>agents/base.Dockerfile</code></td><td>把 <code>auth/</code> 包也 COPY 进 container</td></tr></tbody></table></div>
+<h3>保持不变</h3>
+<ul><li><code>skills/</code>、<code>prompts/system.md</code> —— 业务层，不碰</li><li><code>agents/adf-agent/settings/mcp.json</code>、<code>HITL.json</code> —— 独立配置</li><li>HITL primitive 本身 —— 只是被 device flow 借用同构模式</li></ul>
+<h2>ContextVar 跨线程这个坑我特别提一下</h2>
+<p>你 <code>engine.py:394</code> 有 <code>loop.run_in_executor(self._executor, _run_sync)</code> —— ContextVar 是线程本地，<strong>不会自动跨到 executor 线程</strong>。需要手动 <code>context.run(_run_sync)</code> 或在 <code>_run_sync</code> 开头把 user_id 再 set 一次。这个踩坑率 100%，先写一个 helper <code>propagate_context</code>。</p>
+<h2>设计确认清单（请你 review）</h2>
+<p>1. <strong>auth 独立 top-level 包</strong> —— 同意？还是你想塞进 <code>agent_runtime/core/auth.py</code>？（后者简单，前者更干净，我建议前者）<br>
+2. <strong>auth.json 的 schema 里 <code>mcp_bindings</code> 这个字段</strong> —— 必要吗？或者 MCP server 自己内部写死 provider 名字？我倾向前者（user 可覆盖）。<br>
+3. <strong>runtime 的 Bearer audience 策略</strong>：MVP 阶段，runtime 和 frontend 共用一个 AAD app registration，<code>AUDIENCE=同一个 client_id</code>。简单。要不要这样开始？<br>
+4. <strong>Switch identity 的 UX</strong>：我设想是一个显式的 tool call（<code>switch_identity</code> / <code>login_as_privileged</code>）让用户主动触发。不隐式切号。同意？<br>
+5. <strong>JWT 验签可以推迟</strong>吗？MVP 阶段如果 runtime 只通过 frontend 暴露、网络层锁死，可以先不验签，只 parse header；将来暴露为 service 时再加。还是一开始就做？</p>
+<p>这五点你的答案会决定第一个 PR 的范围。你先看下，哪里不对我再调。</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 02:43:13 UTC</span></div><p>3. runtime 的 Bearer audience 策略：MVP 阶段，runtime 和 frontend 共用一个 AAD app registration，AUDIENCE=同一个 client_id。简单。要不要这样开始？<br>
+这个的另一个的option是怎样的 ？</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 02:44:12 UTC</span></div><p>另一个选项叫 <strong>Option B：runtime 注册独立的 AAD app，frontend 做一次 OBO 把 audience 换成 runtime 再转发</strong>。Azure 官方的&quot;多层 API&quot;推荐做法。</p>
+<h2>两种方案对比</h2>
+<p><strong>Option A（MVP 推荐）— 一个 AAD app</strong></p>
+<pre><code>          ┌─ 一个 AAD app registration: &quot;my-app&quot; (client_id=abc) ─┐
+          │                                                      │
+ User ──▶ EasyAuth ──▶ user_token (aud=abc)                      │
+                              │                                  │
+                              ▼                                  │
+                        frontend ──▶ (原样转发) ──▶ runtime       │
+                                                       │         │
+                                                       ▼         │
+                                              验签 aud==abc ✓    │
+          └──────────────────────────────────────────────────────┘</code></pre>
+<p><strong>Option B（严格版）— 两个 AAD app</strong></p>
+<pre><code>  ┌─ AAD app: &quot;frontend-app&quot;        ┌─ AAD app: &quot;runtime-app&quot; ─┐
+  │  client_id=abc                  │  client_id=xyz           │
+  │                                 │  exposes scope:          │
+  │                                 │    api://runtime/.default│
+  └──────┬──────────────────────────┴───▲──────────────────────┘
+         │                              │
+         │ [AAD portal 里配：frontend-app 有权调 runtime-app 的 scope]
+         │                              │
+ User ──▶ EasyAuth ──▶ user_token (aud=abc)
+                              │
+                              ▼
+                        frontend
+                              │
+                              │ OBO exchange:
+                              │   POST /oauth2/token to AAD
+                              │   assertion=user_token(aud=abc)
+                              │   + frontend client_secret
+                              │   + scope=api://runtime/.default
+                              │
+                              ▼
+                        runtime_user_token (aud=xyz, 身份还是那个 user)
+                              │
+                              ▼
+                        Authorization: Bearer &lt;runtime_user_token&gt;
+                              │
+                              ▼
+                           runtime
+                              │
+                              ▼
+                       验签 aud==xyz ✓</code></pre>
+<h2>Option B 你付出的代价</h2>
+<p>1. <strong>多注册一个 AAD app</strong>（runtime-app），并在&quot;Expose an API&quot; 里定义一个 scope（比如 <code>access_as_user</code>）<br>
+2. <strong>在 AAD 里配 permission</strong>：frontend-app 需要 &quot;API permissions&quot; → 勾选 runtime-app 的 scope，管理员 consent 一次<br>
+3. <strong>frontend 需要 client_secret</strong> 才能跑 OBO（反正做 EasyAuth 已经有了，不算新增）<br>
+4. <strong>每个用户 session 首次</strong> 打 runtime 时多一次 OBO 调用（~50ms，之后 cache 掉）<br>
+5. <strong>配置文档变长</strong>，新同事部署要多做几步</p>
+<h2>Option B 你换到的好处</h2>
+<p>1. <strong>token 不能跨层重放</strong></p>
+<ul><li>A：偷到 frontend 的 cookie/token → 直接能打 runtime</li><li>B：偷到 frontend 的 token → aud=abc，runtime 验签 aud==xyz 直接拒绝</li></ul>
+<p>2. <strong>访问控制分层</strong></p>
+<ul><li>A：谁能用 frontend = 谁能用 runtime，一视同仁</li><li>B：可以在 AAD 里给 runtime-app 单独加一组 &quot;允许访问&quot; 的 user/app（比如某个调度服务只给 runtime 权限，不给 frontend 权限）</li></ul>
+<p>3. <strong>Service caller 语义干净</strong></p>
+<ul><li>A：另一个后台服务想直接调 runtime → 得装作自己是 frontend（去要 aud=abc 的 token），违和</li><li>B：那个服务去 AAD 要 <code>api://runtime/.default</code> 的 token → aud=xyz → 打 runtime，天经地义</li></ul>
+<p>4. <strong>audit log 能分清楚来源</strong></p>
+<ul><li>看 runtime 的访问日志，token 的 <code>azp</code>（authorized party）字段会告诉你是 frontend-app 还是其他 app 调进来的</li></ul>
+<p>5. <strong>符合&quot;最小信任&quot;原则</strong></p>
+<ul><li>frontend 和 runtime 在 AAD 看来是两个<strong>独立的 resource</strong>，不是&quot;同一个 app 的两个 endpoint&quot;</li></ul>
+<h2>什么时候从 A 升到 B</h2>
+<p>触发条件，任一满足就该升：</p>
+<ul><li>[ ] runtime 要开始接受 frontend 之外的 caller（就是你最初问题里&quot;未来也能是一个 service&quot;那个场景）</li><li>[ ] 安全 review 要求 audience 隔离</li><li>[ ] 你想给不同 user 群体开不同的 runtime 访问权限（不跟 frontend 绑定）</li><li>[ ] runtime 和 frontend 要部署在不同的 Azure 订阅/tenant</li><li>[ ] 多个 frontend（比如 web + 手机 app）共用一个 runtime</li></ul>
+<h2>OBO 链条在两种方案下都一样</h2>
+<p>一个容易混的点：<strong>Option B 不影响 runtime → ADF 那一步的 OBO</strong>。runtime 只是从&quot;拿 aud=abc 的 token 去换 aud=ADF&quot;变成&quot;拿 aud=xyz 的 token 去换 aud=ADF&quot;。OBO chain 可以链到任意长，Azure AD 都认。身份（<code>sub</code>/<code>oid</code>）贯穿不变。</p>
+<p>所以你未来从 A 迁到 B 时，runtime 内部的 OBO 代码一行不用改，只是 AUDIENCE 常量改一下。</p>
+<h2>我的建议</h2>
+<p><strong>现在 MVP 用 A，把代码结构写成&quot;将来换 B 零改动 runtime 业务代码&quot;的样子</strong>。具体：</p>
+<ul><li>runtime 端的 <code>AUDIENCE</code> 做成 env var，不硬编码</li><li><code>validate_jwt</code> 函数只读 <code>AUDIENCE</code> 环境变量</li><li>frontend 转发逻辑做一个 <code>forward_token()</code> helper：</li><li>A 模式：直接 pass-through user_token</li><li>B 模式：先 OBO → 再 forward</li><li>切换靠 env var（<code>FORWARD_MODE=passthrough|obo</code>）</li></ul>
+<p>这样满足你第 5 点的触发条件时，加一个 AAD app + 翻两个 env var 就升 B 了，代码改动几乎为零。符合你&quot;freeze runtime&quot;的原则。</p>
+<hr>
+<p>回到你的 review checklist 第 3 点：<strong>你还是用 A 开始吗，还是想一步到位 B？</strong> 我 lean A，但你们如果已经有 security review 流程、或者 runtime 明确要对外开放，直接上 B 也合理，只是 MVP 节奏慢一点。</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 02:48:44 UTC</span></div><p>或者说我就暂时不用这个 OBO 了。用户进来拿 App Service 的这个 Scope 的 token，然后他在 container 里分几种情况：</p>
+<p>1. 如果是 Azure Service，直接用 Managed Identity。<br>
+2. 在 Container Service 里提供 Device Code Login，这样就不用 OBO。</p>
+<p>然后在 Agents Level，我们决定这个 agent 是必须要用 Device Login（必须用自己的 token），还是可以用 Managed Identity。</p>
+<p>比方说一个 JSON，它在 Azure 这一栏 explicitly 地写了 OBO，那你就必须得用 OBO；如果没写，那在 Azure 这一栏就可以用 Managed Identity。</p>
+<p>你觉得这样可以吗？或者说你有什么更好的这种写法？</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 02:50:41 UTC</span></div><p>你这个想法<strong>比我之前推 OBO 的方案更好</strong>。我直说为什么，然后给你一个小的 schema 优化建议。</p>
+<h2>为什么你的方案更好</h2>
+<p>1. <strong>跟现状对齐</strong>：<code>adf_mcp_server.py</code> 现在用 <code>DefaultAzureCredential()</code>，本质就是 Managed Identity。你的方案说&quot;保持这个默认，除非 agent 显式要求用户身份&quot;—— 零迁移压力。<br>
+2. <strong>承认现实</strong>：大多数企业 chat agent 的数据访问<strong>根本不需要 per-user authZ</strong>。一个团队部署一个 container，container 的 MI 有该团队的数据权限，所有人看到的视图一样。OBO 是过度设计。<br>
+3. <strong>心智模型变清晰</strong>：两种身份模式，不混在一起</p>
+<ul><li><strong>Service identity</strong>（container 自己是 actor）：Managed Identity / Service Principal / 固定 PAT</li><li><strong>User identity</strong>（人类是 actor）：Device Code 登录拿 user-scoped token</li></ul>
+<p>4. <strong>Snowflake/ADO 本来就没有 Managed Identity 对等物</strong>，它们 native 就该走 user device code 或 container-owned service account。你的模型天然统一。<br>
+5. <strong>OBO 可以完全跳过</strong>，因为 Device Code 能覆盖它的所有场景：</p>
+<ul><li>用户想以自己身份调 Azure → 做一次 Azure device code login</li><li>用户想切特权号 → 做一次特权号的 device code login</li><li><strong>UX 代价</strong>：首次登录多开一个 tab。<strong>省了</strong>：一整套 OBO 配置（API permissions、frontend client_secret 管理、OBO 失败的各种边界）</li></ul>
+<p>所以我推荐：<strong>v1 根本不做 OBO，只做 service credential + user device code 两种</strong>。要做 OBO 时再加，加回来也只是多一个 <code>mode: &quot;obo&quot;</code> 选项，不改架构。</p>
+<h2>一点 schema 优化建议</h2>
+<p>你说&quot;Azure 这一栏 explicitly 写 OBO 就必须 OBO，不写就用 Managed Identity&quot;—— 我把这个直觉抽出来，让它更 provider-agnostic：</p>
+<pre><code class="lang-json">{
+  &quot;providers&quot;: {
+    &quot;azure&quot;: {
+      &quot;mode&quot;: &quot;device_code&quot;,
+      &quot;scope&quot;: &quot;https://management.azure.com/.default&quot;
+    },
+    &quot;azure-privileged&quot;: {
+      &quot;mode&quot;: &quot;device_code&quot;,
+      &quot;scope&quot;: &quot;https://management.azure.com/.default&quot;,
+      &quot;tenant&quot;: &quot;privileged-tenant-id&quot;
+    },
+    &quot;snowflake&quot;: {
+      &quot;mode&quot;: &quot;device_code&quot;,
+      &quot;account&quot;: &quot;xy12345.us-east-1&quot;,
+      &quot;role&quot;: &quot;ANALYST&quot;
+    }
+  },
+  &quot;mcp_bindings&quot;: {
+    &quot;adf&quot;:       &quot;azure&quot;,
+    &quot;snowflake&quot;: &quot;snowflake&quot;
+  }
+}</code></pre>
+<p><strong>核心约定</strong>：</p>
+<ul><li><code>mode</code> 只有两个值：<code>&quot;service&quot;</code> 或 <code>&quot;device_code&quot;</code>（OBO 以后再说）</li><li><strong>entry 不存在 = 默认 service mode</strong>。所以 &quot;不写 azure 这一栏&quot; 和 &quot;写了 azure: service&quot; 等价。我倾向显式写出来更好读，但都支持。</li><li>Azure 的 <code>service</code> mode → <code>DefaultAzureCredential</code>（MI）</li><li>Snowflake 的 <code>service</code> mode → 容器环境里的 service account 凭证（key-pair / client credentials）</li><li>所有 <code>device_code</code> mode → 都走统一的 device flow primitive</li><li><code>mcp_bindings</code> 告诉 runtime：这个 MCP server 默认用哪个 provider 拿 token</li></ul>
+<h2>新的数据流图（比之前简单）</h2>
+<pre><code>User ──▶ EasyAuth ──▶ frontend
+                        │
+                        │ 从 X-MS-TOKEN-AAD-ID-TOKEN 拿 JWT
+                        │ (只用来验身份，不用来调下游)
+                        │
+                        ▼
+                   Authorization: Bearer &lt;id_token&gt;
+                        │
+                        ▼
+                    runtime
+                        │
+                        │ ① 验 JWT → 拿 UserIdentity → ContextVar
+                        │
+                        │ ② MCP tool 被调用
+                        │    查 auth.json 看这个 provider 是哪种 mode
+                        │
+                        ├── mode: service      ──▶ 容器自己的凭证 ──▶ 下游
+                        │                          (不看 user)
+                        │
+                        └── mode: device_code  ──▶ 查 cache[(user, provider)]
+                                                    ├─ 有 → 注入 ──▶ 下游
+                                                    └─ 无 → 触发 device flow ──▶ frontend
+                                                             (用户完成) ──▶ cache ──▶ 重试</code></pre>
+<p><strong>注意</strong>：AAD access token 不再穿过系统往下游走。ID token 只在 runtime 入口用来<strong>验证是谁</strong>。下游身份要么来自 service credential，要么来自 device code 的结果 —— 都和 EasyAuth 的 token <strong>解耦</strong>。</p>
+<h2>和之前改动清单的差异</h2>
+<p><strong>减少的</strong>：</p>
+<ul><li>❌ <code>auth/providers/azure_obo.py</code> — 不做了</li><li>❌ frontend 转发 <code>X-MS-TOKEN-AAD-ACCESS-TOKEN</code> — 改成 ID token 用于验身份</li><li>❌ <code>UserIdentity.aad_access_token</code> 字段 — 不需要往下游带</li><li>❌ MVP 阶段 Option A vs B 的 audience 讨论 — 因为没有 OBO，runtime 只做 JWT 验签不做 token exchange，audience 策略简单很多</li></ul>
+<p><strong>不变的</strong>：</p>
+<ul><li>✅ <code>auth/</code> 独立 top-level 包</li><li>✅ <code>auth/providers/azure_device.py</code>、<code>snowflake_device.py</code>、<code>ado_device.py</code></li><li>✅ <code>auth/cache.py</code>（token store）</li><li>✅ <code>auth/identity.py</code>（JWT validation + UserIdentity）</li><li>✅ <code>agents/adf-agent/settings/auth.json</code></li><li>✅ MCP 的 <code>ContextualCredential</code> 模式（共享 client，thread-local token）</li><li>✅ <code>adf_mcp_server.py</code> 删 <code>_client</code> singleton</li></ul>
+<p><strong>新增的考虑</strong>：</p>
+<ul><li>Provider 抽象要把 <code>&quot;service&quot;</code> mode 也当成一种 provider —— 它不需要 user 参与，实现就是返回 <code>DefaultAzureCredential</code> 或等价物。这样 <code>auth.get_credential(user_id, provider_name)</code> 的 API 对两种 mode 统一。</li></ul>
+<h2>一个边界你要想清楚</h2>
+<p><strong>Service mode 下的 token cache key</strong>：</p>
+<ul><li>Device code mode：key = <code>(user_id, provider)</code> — 每人一把</li><li>Service mode：key = <code>(&quot;__container__&quot;, provider)</code> 或干脆不 cache，每次现建 client（反正是共享身份，Azure SDK 自己也会内部 cache MI token）</li></ul>
+<p>我会写成：<strong>service mode 的 provider 返回一个 &quot;总是新鲜的&quot; credential 对象（内部靠 SDK 自己 cache），device mode 的 provider 返回从我们 cache 里取的 token</strong>。对 MCP 层面看，都是&quot;给我一个能用的 credential&quot;，API 统一。</p>
+<h2>什么时候该回头加 OBO</h2>
+<p>就一条触发条件：<strong>当 device code login 的 UX 对用户来说真的是负担时</strong>。比如：</p>
+<ul><li>用户每天用 10 次 agent，每次都要 device code 登一遍 Azure 太烦</li><li>多数请求需要以 user 身份调 Azure，但业务允许&quot;sso-derived 隐式身份&quot;</li><li>合规要求所有操作必须以 user 身份 audit，不接受 service account 代理</li></ul>
+<p>这三条都不成立时，device code 够用。加 OBO 会是纯 UX 优化，不动架构。</p>
+<h2>我对你认知的 verdict</h2>
+<p><strong>对的。</strong> 这是更务实的设计。你等于把&quot;per-user authZ&quot;这个功能从<strong>默认开启</strong>降级成<strong>按需开启</strong>，降低了整体复杂度和配置负担，同时保留了需要时升级的能力。</p>
+<hr>
+<p>所以更新后的 v1 范围：</p>
+<p>1. <code>auth/</code> 包（无 OBO）<br>
+2. JWT 身份验证（只验不用）<br>
+3. Service credential provider（复用现有 <code>DefaultAzureCredential</code> 逻辑）<br>
+4. Azure/Snowflake/ADO 三个 device code provider<br>
+5. Token cache<br>
+6. auth.json schema + 加载<br>
+7. MCP <code>ContextualCredential</code> 改造<br>
+8. engine 里 ContextVar 跨线程的 propagate<br>
+9. Pending-action SSE event（device code URL 推给 frontend）</p>
+<p>这样 MVP 可以砍掉大概 30% 复杂度。你要 review 哪部分？或者开始动手？</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 02:57:33 UTC</span></div><p>这个 Device Code Login 能保留多久呢？</p>
+<p>  User ──▶ EasyAuth ──▶ frontend                                                                                                                         <br>
+                          │                                                                                                                              <br>
+                          │ 从 X-MS-TOKEN-AAD-ID-TOKEN 拿 JWT<br>
+                          │ (只用来验身份，不用来调下游)                                                                                                 <br>
+                          │                                                                                                                              <br>
+                          ▼                                                                                                                              <br>
+                     Authorization: Bearer &lt;id_token&gt;                                                                                                    <br>
+                          │                    <br>
+                          ▼<br>
+                      runtime<br>
+                          │                                                                                                                              <br>
+                          │ ① 验 JWT → 拿 UserIdentity → ContextVar<br>
+                          │                                                                                                                              <br>
+                          │ ② MCP tool 被调用  <br>
+                          │    查 auth.json 看这个 provider 是哪种 mode                                                                                  <br>
+                          │                                                                                                                              <br>
+                          ├── mode: service      ──▶ 容器自己的凭证 ──▶ 下游                                                                             <br>
+                          │                          (不看 user)                                                                                         <br>
+                          │                                                                                                                              <br>
+                          └── mode: device_code  ──▶ 查 cache[(user, provider)]                                                                          <br>
+                                                      ├─ 有 → 注入 ──▶ 下游                                                                              <br>
+                                                      └─ 无 → 触发 device flow ──▶ frontend                                                              <br>
+                                                               (用户完成) ──▶ cache ──▶ 重试  <br>
+这个架构当中为什么还要验 JWT，在 runtime 里面去拿这个 user identity？</p>
+<p>因为不是只有两个 mode 吗：<br>
+1. Service mode<br>
+2. Device code mode</p>
+<p>这两个都不需要已知的这个 user identity 啊。</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 02:58:39 UTC</span></div><p>这问得好，我没讲透。你<strong>一半对</strong>：identity 不再当 <strong>credential</strong>（token）用 —— 这部分你说对了。但它还在当 <strong>index</strong>（key）用，而且这个 index 如果错了会有严重的安全问题。</p>
+<h2>最要命的一个例子：device code cache 的 key</h2>
+<p>看 device_code 这条分支：</p>
+<pre><code>cache[(user, provider)]  ← 这个 key 里 &quot;user&quot; 从哪来？</code></pre>
+<p>假设你把 <code>user</code> 拿掉，cache 只按 <code>provider</code> 做 key：</p>
+<pre><code>时刻 T1:
+  用户 A 进来 → 点了用 Snowflake 的 agent → cache miss
+  → 触发 device flow → A 去新 tab 登录自己的 Snowflake 账号
+  → 拿到 token → cache[&quot;snowflake&quot;] = A 的 token ✅
+
+时刻 T2（同一个 container，同一瞬间）:
+  用户 B 进来 → 点了用 Snowflake 的 agent → cache hit
+  → 用 cache[&quot;snowflake&quot;] 调 Snowflake → ❌ B 正在用 A 的身份查 Snowflake
+
+时刻 T3:
+  B 在不知情的情况下看到了 A 的 Snowflake 数据
+  A 在 Snowflake 的审计日志里背锅，B 做的查询记在 A 头上</code></pre>
+<p><strong>这是 data leak。</strong> 必须 <code>cache[(user_id, provider)]</code> 才安全 —— 每人一把 token。所以 <strong>runtime 必须知道当前请求是谁</strong>。</p>
+<h2>Service mode 真的不需要吗？再看一下</h2>
+<p>Service mode 下，token 本身是 container 的，不挂在 user 身上。但这些问题还在：</p>
+<p>1. <strong>SSE event routing</strong>：用户 A 正在 chat，某个 tool 需要 device flow（比如 agent 有多个 provider，一个走 service，一个走 device）→ device URL 要推给<strong>谁的 SSE 连接</strong>？必须按 user 路由。<br>
+2. <strong>Admission control</strong>：没 auth 的情况下，任何人能打到你的 <code>/api/chat</code>。service mode 只是解决了&quot;用什么身份调下游&quot;，没解决&quot;谁能用这个 agent&quot;。公司内部 agent 你总不能让非本公司人随便调吧。<br>
+3. <strong>Conversation 归属</strong>：<code>agent_frontend</code> 已经有 session 存储了，<code>_DEFAULT_USER_ID=&quot;local&quot;</code> 那里总得填点啥 —— 不按 user 分，大家的 session 混在一起。<br>
+4. <strong>审计</strong>：&quot;某用户触发了 ADF 查询&quot;是合规要求，即使实际 token 是 service 身份。LangSmith metadata、access log 都要这个字段。<br>
+5. <strong>Rate limit / quota</strong>：每人每分钟 N 次请求 —— 没 user_id 就做不了。</p>
+<h2>那为什么要<strong>验</strong> JWT，不是只<strong>读</strong> header？</h2>
+<p>因为&quot;知道 user_id&quot;和&quot;<strong>可信地</strong>知道 user_id&quot;是两件事。</p>
+<ul><li><code>X-MS-CLIENT-PRINCIPAL-ID</code> 这个 header <strong>任何人都能塞</strong>（只要能打到 container）。你读出来做 cache key → 攻击者塞个别人的 user_id → 缓存污染，又变成 data leak。</li><li>验 JWT 签名（用 Azure AD 公钥）是<strong>密码学证明</strong>&quot;这个 user_id 确实是 Azure AD 发给这个人的&quot;。伪造成本 = 拿到 Azure AD 私钥 = 不现实。</li></ul>
+<p>所以验 JWT 的目的不是&quot;为了拿 token 下沉&quot;，是&quot;<strong>为了让 user_id 可信</strong>&quot;。下沉 token 那一步我们已经砍掉了，但 user_id 作为 <strong>cache key 和路由 key</strong> 还必须可信。</p>
+<h2>换一个说法总结</h2>
+<p>之前我讲错了点什么：我把 identity 说得好像只是为了 OBO。砍掉 OBO 之后听起来确实像&quot;那还验 JWT 干嘛&quot;。但其实：</p>
+<div class="table-wrap"><table><thead><tr><th>用途</th><th>需要 identity 吗</th><th>为什么</th></tr></thead><tbody><tr><td>Downstream credential</td><td>❌（已砍）</td><td>OBO 砍了</td></tr><tr><td>Device code cache key</td><td>✅</td><td>不按 user 分桶 = 跨用户 token 污染 = data leak</td></tr><tr><td>SSE event routing</td><td>✅</td><td>device URL 得推给对的那个人</td></tr><tr><td>Admission control</td><td>✅</td><td>无 auth = 任何人可调</td></tr><tr><td>Audit / quota</td><td>✅</td><td>合规 + 防滥用</td></tr></tbody></table></div>
+<p>JWT 验签 = 让上面这些 &quot;user_id&quot; 可信。<strong>identity 不做 token 了，但依然是系统的分桶 key</strong>。</p>
+<h2>有没有办法连 JWT 都不验？</h2>
+<p>理论上可以，条件是：</p>
+<ul><li>网络层已经锁死（App Service Access Restriction + Private Endpoint）—— 保证没有 EasyAuth middleware 的请求<strong>物理上</strong>打不到 container</li><li>只相信 EasyAuth 注入的 header</li><li>接受&quot;以后想把 runtime 当 service 给别人调&quot;时要重写这块</li></ul>
+<p>MVP 想快可以这么做，等于把 threat model 推给 infra 层。但代码里<strong>读 header 后那一刻就要提取 user_id 存起来</strong>，下游全用那个值。未来加 JWT 验签只改入口这一处。</p>
+<hr>
+<p>所以这张架构图里 <code>验 JWT → UserIdentity → ContextVar</code> 这一步<strong>保留是对的</strong>，但语义从&quot;拿 token 给下游用&quot;变成&quot;拿可信的 user_id 给 cache 和 routing 用&quot;。要我把图的这一步标注改清楚吗？</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 03:06:32 UTC</span></div><p>把我们说的这些内容全部总结出来，并给出一个最终的 plan。</p>
+<p>请将我们整个对话非常详细地记录在@doc 里，并明确指出我们最终的计划是怎样的。我们是怎么设计 OBO，到最后为什么放弃 OBO，以及 OBO 到底是什么等等 还有那个 authentication 的 flow，全部记住并记下来</p>
+<p>把我们说的这些内容全部详细的记下来，并给出一个最终的 plan。</p>
+<p>请将我们整个对话非常详细地记录在@doc 里，并明确指出我们最终的计划是怎样的。我们是怎么设计 OBO，到最后为什么放弃 OBO，以及 OBO 到底是什么等等 还有那个 authentication 的 flow，全部记住并记下来 我觉得这是非常有用的对话</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 03:07:02 UTC</span></div><ul class="tool-calls"><li>⚙️ <code>ls -la /Users/wqeq/Desktop/project/agent-runtime/doc</code> — List doc folder contents</li><li>📖 Read <code>/Users/wqeq/Desktop/project/agent-runtime/doc/langsmith-integration.md</code></li><li>📖 Read <code>/Users/wqeq/Desktop/project/agent-runtime/doc/design.md</code></li></ul>
+<p>开始写文档。</p>
+<ul class="tool-calls"><li>📝 Write <code>/Users/wqeq/Desktop/project/agent-runtime/doc/auth-flow.md</code></li><li>⚙️ <code>wc -l /Users/wqeq/Desktop/project/agent-runtime/doc/auth-flow.md</code> — Count lines in new doc</li></ul>
+<p>文档已写入 <code>doc/auth-flow.md</code>（970 行）。记一个 project 指针，方便后续开工时不用重读。</p>
+<ul class="tool-calls"><li>📖 Read <code>/Users/wqeq/.claude/projects/-Users-wqeq-Desktop-project-agent-runtime/memory/MEMORY.md</code></li><li>📝 Write <code>/Users/wqeq/.claude/projects/-Users-wqeq-Desktop-project-agent-runtime/memory/project_auth_design.md</code></li><li>✏️ Edit <code>/Users/wqeq/.claude/projects/-Users-wqeq-Desktop-project-agent-runtime/memory/MEMORY.md</code></li></ul>
+<p>做完了。总结一下。</p>
+<h2>文档结构（<code>doc/auth-flow.md</code>，970 行）</h2>
+<p>1. <strong>需求与背景</strong> —— 现状痛点（<code>_DEFAULT_USER_ID</code> / MCP <code>_client</code> singleton）+ 明确需求<br>
+2. <strong>为什么原样传 header 不行</strong> —— 三个雷（MCP 固化身份、模块级耦合、header 可伪造）<br>
+3. <strong>App Service 并发模型</strong> —— 打消&quot;instance 锁定单用户&quot;的误解<br>
+4. <strong>OAuth2 / AAD 核心概念</strong> —— App Registration、audience、EasyAuth 做的事<br>
+5. <strong>完整登录流程可视化</strong> —— Phase 0 部署 + Phase 1 登录 11 步<br>
+6. <strong>OBO 是什么</strong> —— 流程图、原始方案、Option A vs B 讨论<br>
+7. <strong>为什么最终放弃 OBO</strong> —— Device Code 覆盖场景、Managed Identity 覆盖场景、何时加回<br>
+8. <strong>MCP 与 Auth 解耦</strong> —— <code>ContextualCredential</code> + thread-local 的巧思<br>
+9. <strong>为什么砍 OBO 还要验 JWT</strong> —— identity 从 credential 降级成 index，但仍关键<br>
+10. <strong>最终架构</strong> —— 数据流图、module 结构、auth.json schema、三层防御<br>
+11. <strong>具体改动清单</strong> —— 新增 / 修改 / 不变 + ContextVar 跨线程坑<br>
+12. <strong>MVP 边界</strong> —— v1 范围、明确不做、升级路径<br>
+13. <strong>5 个待决策问题</strong> —— 开工前要拍板的<br>
+14. <strong>术语对照表</strong><br>
+15. <strong>参考资料</strong> + 附录：决策时间线</p>
+<h2>记住了</h2>
+<ul><li><code>doc/auth-flow.md</code> 是这个设计的定稿</li><li>加了一条 project memory 指过去，未来 session 不用重读整个对话</li><li>关键决策要点全部沉淀（OBO rejected、两种 mode、JWT 仍要验、top-level auth 包、Option A MVP）</li></ul>
+<p>下一步看你的节奏：可以按 §13 那 5 个 open questions 先拍板，然后按 §11 的清单开第一个 PR。</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 03:15:48 UTC</span></div><p>你输出一下我们最终的这个 plan</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 03:17:04 UTC</span></div><h1>Auth 设计最终方案（v1）</h1>
+<h2>目标</h2>
+<p>让多用户安全地并发使用 agent container，下沉用户身份用于 cache 分桶、admission、audit；下游数据访问默认走 container 自己的 service credential，允许每个 agent 在 JSON 里声明&quot;某些 provider 必须走用户身份&quot;（device code login）。</p>
+<p><strong>核心原则</strong>：auth 和 MCP 完全解耦，auth 是独立 top-level 包，runtime 冻结业务逻辑。</p>
+<hr>
+<h2>模块布局</h2>
+<pre><code>agent-runtime/
+├── agent_frontend/            # 解 EasyAuth header、转发 Bearer 给 runtime
+├── agent_runtime/             # 验 JWT、注入 token 给 MCP、托管 device flow plumbing
+├── auth/                      # ★ 新建，top-level 独立包
+│   ├── identity.py            # UserIdentity dataclass + JWT 验签
+│   ├── easyauth.py            # 解 X-MS-* header → UserIdentity（复用 opsagent2 那 20 行）
+│   ├── cache.py               # dict[(user_id, provider), TokenRecord] + threading.Lock
+│   ├── config.py              # 加载 auth.json
+│   └── providers/
+│       ├── base.py            # Provider 抽象：get_credential(user_id) -&gt; Credential
+│       ├── azure_service.py   # DefaultAzureCredential 包一层
+│       ├── azure_device.py    # Azure device code flow
+│       ├── snowflake_device.py
+│       └── ado_device.py
+└── agents/
+    └── adf-agent/
+        └── settings/
+            ├── mcp.json
+            ├── HITL.json
+            └── auth.json      # ★ 新增：声明这个 agent 要用哪些 provider</code></pre>
+<hr>
+<h2>auth.json schema（每个 agent 一份）</h2>
+<pre><code class="lang-json">{
+  &quot;providers&quot;: {
+    &quot;azure&quot;: {
+      &quot;mode&quot;: &quot;service&quot;
+    },
+    &quot;azure-privileged&quot;: {
+      &quot;mode&quot;: &quot;device_code&quot;,
+      &quot;scope&quot;: &quot;https://management.azure.com/.default&quot;,
+      &quot;tenant&quot;: &quot;privileged-tenant-id&quot;
+    },
+    &quot;snowflake&quot;: {
+      &quot;mode&quot;: &quot;device_code&quot;,
+      &quot;account&quot;: &quot;xy12345.us-east-1&quot;,
+      &quot;role&quot;: &quot;ANALYST&quot;
+    }
+  },
+  &quot;mcp_bindings&quot;: {
+    &quot;adf&quot;:       &quot;azure&quot;,
+    &quot;snowflake&quot;: &quot;snowflake&quot;
+  }
+}</code></pre>
+<p><strong>约定</strong>：</p>
+<ul><li><code>mode</code> 只有 <code>&quot;service&quot;</code> 或 <code>&quot;device_code&quot;</code>（OBO 推迟到 v2）</li><li>provider entry 缺省 = <code>mode: service</code></li><li><code>mcp_bindings</code> 把 MCP server 名字映射到 provider 名字（runtime 在注入 token 时查这张表）</li></ul>
+<hr>
+<h2>两种身份，职责分离</h2>
+<div class="table-wrap"><table><thead><tr><th>概念</th><th>来自哪</th><th>用来干嘛</th></tr></thead><tbody><tr><td><strong>User identity</strong></td><td>EasyAuth → JWT 验签</td><td>Cache 分桶、SSE routing、admission、audit</td></tr><tr><td><strong>Service credential</strong></td><td>容器自己的 Managed Identity / service account</td><td><code>mode: service</code> 的 provider 调下游</td></tr><tr><td><strong>User&#x27;s device token</strong></td><td>用户显式做 device code login</td><td><code>mode: device_code</code> 的 provider 调下游</td></tr></tbody></table></div>
+<p><strong>关键点</strong>：EasyAuth 的 access token <strong>不再往下游穿</strong>。ID token 只在 runtime 入口验身份。下游 credential 要么是 service 的，要么是 device flow 拿到的。</p>
+<hr>
+<h2>数据流</h2>
+<pre><code>User ──▶ EasyAuth ──▶ agent_frontend
+                         │
+                         │ 从 X-MS-TOKEN-AAD-ID-TOKEN 拿 JWT
+                         ▼
+                    Authorization: Bearer &lt;id_token&gt;
+                         │
+                         ▼
+                    agent_runtime
+                         │
+                         │ ① require_user dependency:
+                         │      验 JWT 签名、iss、aud、exp
+                         │      → UserIdentity → ContextVar
+                         │      (user_id 从此可信)
+                         │
+                         │ ② agent 跑、call MCP tool
+                         │      runtime 查 auth.json 的 mcp_bindings
+                         │      找到这个 MCP 绑的 provider name
+                         │
+                         ├── provider.mode == &quot;service&quot;
+                         │       auth.get_credential(None, provider)
+                         │       → DefaultAzureCredential / service account
+                         │       → 注入进 MCP tool args ──▶ 下游
+                         │
+                         └── provider.mode == &quot;device_code&quot;
+                                 auth.get_credential(user_id, provider)
+                                 ├─ cache hit  → 注入 ──▶ 下游
+                                 └─ cache miss → 触发 device flow
+                                                    │
+                                                    │ (用 HITL 同构的 pending-action
+                                                    │  通过 SSE 把 device URL + user_code
+                                                    │  推给 frontend)
+                                                    │
+                                                    ▼
+                                               用户新 tab 完成 login
+                                                    │
+                                                    ▼
+                                               runtime poll 到 token → cache
+                                                    → 继续注入 ──▶ 下游</code></pre>
+<hr>
+<h2>改动清单</h2>
+<h3>新增文件</h3>
+<div class="table-wrap"><table><thead><tr><th>文件</th><th>职责</th></tr></thead><tbody><tr><td><code>auth/identity.py</code></td><td><code>UserIdentity</code> dataclass，<code>validate_jwt(token) -&gt; UserIdentity</code></td></tr><tr><td><code>auth/easyauth.py</code></td><td><code>parse_easyauth_headers(headers) -&gt; UserIdentity</code>（含本地 dev bypass）</td></tr><tr><td><code>auth/cache.py</code></td><td>In-process token cache，<code>get/put/invalidate</code>，加锁</td></tr><tr><td><code>auth/config.py</code></td><td><code>load_auth_config(path) -&gt; AuthConfig</code></td></tr><tr><td><code>auth/providers/base.py</code></td><td>Provider 抽象 + <code>ContextualCredential</code> helper（thread-local token）</td></tr><tr><td><code>auth/providers/azure_service.py</code></td><td>包装 <code>DefaultAzureCredential</code></td></tr><tr><td><code>auth/providers/azure_device.py</code></td><td>Azure device code state machine</td></tr><tr><td><code>auth/providers/snowflake_device.py</code></td><td>同上</td></tr><tr><td><code>auth/providers/ado_device.py</code></td><td>同上</td></tr><tr><td><code>agents/adf-agent/settings/auth.json</code></td><td>当前 agent 的 provider 声明</td></tr></tbody></table></div>
+<h3>修改文件</h3>
+<div class="table-wrap"><table><thead><tr><th>文件</th><th>改什么</th></tr></thead><tbody><tr><td><code>agent_frontend/server.py:46</code></td><td>删 <code>_DEFAULT_USER_ID</code>，所有 route 加 <code>user: UserIdentity = Depends(require_user)</code></td></tr><tr><td><code>agent_frontend/server.py:225</code></td><td>chat proxy 转发时把 EasyAuth 的 id_token 作为 <code>Authorization: Bearer</code> 传 runtime</td></tr><tr><td><code>agent_runtime/api/routes/chat.py</code></td><td>加 <code>require_user</code> dependency，验 JWT → set ContextVar</td></tr><tr><td><code>agent_runtime/api/routes/confirm.py</code></td><td>同上（确认 HITL 归属）</td></tr><tr><td><code>agent_runtime/api/routes/meta.py</code></td><td>同上（<code>/api/info</code> 可免 auth）</td></tr><tr><td><code>agent_runtime/engine.py:316-408</code></td><td><code>chat_stream</code> 接收 <code>UserIdentity</code>；<code>_run_sync</code> 在 executor 线程里 <strong>重新 set ContextVar</strong>（跨线程不会自动带）</td></tr><tr><td><code>agent_runtime/engine.py:_ConfirmRegistry</code></td><td>泛化或复制一份给 device flow 的 pending-action 用</td></tr><tr><td><code>agent_runtime/core/tools.py</code></td><td>MCP tool call 前 middleware：读 ContextVar → 查 mcp_bindings → <code>auth.get_token()</code> → 注入进 tool args</td></tr><tr><td><code>agent_runtime/core/config.py</code></td><td>新增 <code>resolve_auth_config()</code>，读 <code>settings/auth.json</code></td></tr><tr><td><code>agents/adf-agent/mcp/adf_mcp_server.py:26-35</code></td><td>删 <code>_client = DefaultAzureCredential()</code> singleton，改 <code>ContextualCredential</code> 模式：共享一个 <code>DataFactoryManagementClient</code>，credential 的 <code>get_token</code> 从 thread-local 读</td></tr><tr><td><code>agents/adf-agent/mcp/adf_mcp_server.py</code> tools</td><td>每个 <code>@mcp.tool</code> 接收隐式 <code>_auth_token</code> 参数（用装饰器批量注入）</td></tr><tr><td><code>agents/base.Dockerfile</code></td><td>COPY <code>auth/</code> 包进 container</td></tr></tbody></table></div>
+<h3>不变</h3>
+<ul><li>skills/、prompts/system.md</li><li>mcp.json、HITL.json 格式</li><li>现有 HITL primitive（device flow 复用它的架构，同构）</li></ul>
+<hr>
+<h2>安全关键点</h2>
+<p>1. <strong>JWT 验签必做</strong>：runtime 入口验签是唯一让 <code>user_id</code> 可信的方式，直接读 header 会被伪造 → cache 污染 → 跨用户 token 泄漏。<br>
+2. <strong>Cache key 必须是 <code>(user_id, provider)</code></strong>：不按 user 分桶 = data leak。<br>
+3. <strong>MCP subprocess 不持有任何 user 状态</strong>：<code>ContextualCredential</code> 每次 call 从 thread-local 读当前请求的 token，subprocess 本身无状态。<br>
+4. <strong>service credential 不挂 user_id</strong>：key 用 <code>None</code> 或固定常量，所有人共享（符合&quot;container 作为 actor&quot;语义）。<br>
+5. <strong>ContextVar 跨线程不自动传</strong>：<code>engine.py</code> 的 <code>run_in_executor</code> 边界必须手动 propagate。</p>
+<hr>
+<h2>不在 v1 范围</h2>
+<ul><li><strong>OBO flow</strong>：device code 能覆盖所有场景，UX 成本换来的是架构极大简化。需要 OBO 时只是多加一个 <code>mode: &quot;obo&quot;</code> provider，不改架构。</li><li><strong>JWT audience 隔离（Option B）</strong>：runtime 和 frontend 共用一个 AAD app registration。<code>AUDIENCE</code> 做成 env var，未来拆分时只改环境变量。</li><li><strong>外部 token store（Redis / Key Vault）</strong>：in-process dict 够用。多 worker 路由不一致时用 sticky session。</li><li><strong>多 instance 横向扩展的 cache 一致性</strong>：同上，sticky session。</li><li><strong>Token auto-refresh</strong>：device code 拿到 refresh_token，但 v1 可以 lazy —— 过期就让 user 重新 device login。</li><li><strong>Per-user admission control</strong>：v1 只分&quot;已认证/未认证&quot;，不做&quot;哪些 user 能用哪个 agent&quot;。</li></ul>
+<hr>
+<h2>开发顺序建议（一个 PR 一步，可分批 review）</h2>
+<p>1. <strong>PR1：<code>auth/identity.py</code> + <code>auth/easyauth.py</code> + frontend 接入</strong></p>
+<ul><li>落 <code>UserIdentity</code>、JWT 验签、dependency</li><li>frontend 删 <code>_DEFAULT_USER_ID</code></li><li>先做到 &quot;user_id 从 EasyAuth 下沉到 runtime 的 ContextVar&quot;，下游还用老逻辑</li></ul>
+<p>2. <strong>PR2：<code>auth/cache.py</code> + <code>auth/providers/base.py</code> + <code>azure_service.py</code></strong></p>
+<ul><li>抽象 provider，把现有 <code>DefaultAzureCredential</code> 包成 <code>azure_service</code> provider</li><li>行为不变，但代码结构就位</li></ul>
+<p>3. <strong>PR3：MCP <code>ContextualCredential</code> 改造</strong></p>
+<ul><li><code>adf_mcp_server.py</code> 删 <code>_client</code> singleton，改 thread-local</li><li>runtime 端加 tool call middleware 注入 token</li><li>这一步是 &quot;MCP decouple from auth&quot; 的实际落地</li></ul>
+<p>4. <strong>PR4：<code>auth.json</code> + <code>azure_device.py</code> + device flow SSE event</strong></p>
+<ul><li>第一个 device code provider 跑通（挑 Azure 先）</li><li>HITL primitive 泛化 / 复用</li></ul>
+<p>5. <strong>PR5：Snowflake / ADO provider</strong></p>
+<ul><li>到这一步加新服务 = 新 provider module + JSON 一行，runtime 零改动，验证架构</li></ul>
+<hr>
+<h2>需要你最终拍板的 5 点</h2>
+<p>1. <code>auth/</code> 独立 top-level 包 ✅（已定）还是塞进 <code>agent_runtime/core/auth.py</code>？<br>
+2. MVP 跳过 OBO，只做 service + device_code ✅（已定）？<br>
+3. MVP 跳过 JWT 验签（仅网络层隔离），直接信 header？—— 我建议<strong>做验签</strong>，多 50 行代码买长期正确性<br>
+4. Runtime 和 frontend 共用一个 AAD app registration（Option A）✅（已定），env var 预留升级路径<br>
+5. PR 拆分节奏同意吗？还是想合并几个？</p>
+<p>你确认完我就开 PR1。</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 03:17:37 UTC</span></div><p>这个plan 原封不动存到 @doc 叫 mi-device-code-auth.md</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 03:18:26 UTC</span></div><ul class="tool-calls"><li>📝 Write <code>/Users/wqeq/Desktop/project/agent-runtime/doc/mi-device-code-auth.md</code></li></ul>
+<p>已存到 <code>doc/mi-device-code-auth.md</code>，内容与上一条消息输出的 plan 完全一致。</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 03:19:41 UTC</span></div><p>Base directory for this skill: /Users/wqeq/.claude/skills/export-conversations</p>
+<h1>Export conversation history as notes</h1>
+<p>Converts Claude Code&#x27;s stored JSONL sessions into Markdown suitable for re-reading as a learning journal. The bundled Python script does all parsing and rendering — <strong>do not</strong> invoke an LLM to rewrite or summarize; the conversion is deterministic and lossless with respect to the chosen verbosity mode.</p>
+<h2>Two dimensions</h2>
+<p><strong>Scope</strong> — which sessions to export:</p>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Token in <code>current</code></th><th style="text-align:left">Meaning</th></tr></thead><tbody><tr><td style="text-align:left"><em>(none)</em> or <code>current</code></td><td style="text-align:left">Only the current session.</td></tr><tr><td style="text-align:left"><code>all</code> / <code>folder</code></td><td style="text-align:left">Every session recorded for the current working directory.</td></tr><tr><td style="text-align:left"><em>(a UUID)</em></td><td style="text-align:left">That specific session.</td></tr></tbody></table></div>
+<p><strong>Verbosity</strong> — how much tool activity to include:</p>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Token in <code>current</code></th><th style="text-align:left">Meaning</th></tr></thead><tbody><tr><td style="text-align:left"><em>(none)</em> / <code>notes</code></td><td style="text-align:left"><strong>Default.</strong> User + assistant text, thinking blocks (folded), tool calls compressed to a one-line bullet (<code>📖 Read ...</code>, <code>✏️ Edit ...</code>). Tool stdout dropped. Sidechain subagent traffic skipped.</td></tr><tr><td style="text-align:left"><code>full</code></td><td style="text-align:left">Everything verbatim — full tool call JSON inputs and tool stdout (truncated past ~4k chars). Includes sidechain messages.</td></tr></tbody></table></div>
+<p>The tokens can appear in any order: <code>/export-conversations all full</code>, <code>/export-conversations full</code>, <code>/export-conversations &lt;uuid&gt; full</code> all work.</p>
+<h2>How to run it</h2>
+<p><strong>Default — current session as notes:</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --session-id &quot;0ad21bd9-cdda-483f-b7a2-b3fc854f6aa6&quot;</code></pre>
+<p><strong>All sessions for the current folder, notes mode:</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --all</code></pre>
+<p><strong>Full dump (verbose):</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --session-id &quot;0ad21bd9-cdda-483f-b7a2-b3fc854f6aa6&quot; --mode full
+python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --all --mode full</code></pre>
+<p><strong>Explicit session id:</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --session-id &quot;&lt;uuid&gt;&quot;</code></pre>
+<p>Output goes to <code>&lt;cwd&gt;/Conversation History/&lt;session-id&gt;.md</code>. The folder is created if missing; existing files with the same name are overwritten.</p>
+<h2>Behavior details</h2>
+<ul><li>Project folder lookup: <code>~/.claude/projects/&lt;encoded-cwd&gt;/</code> where <code>/</code> and <code>.</code> in the cwd become <code>-</code>. Falls back to scanning project folders and matching on the <code>cwd</code> field inside each JSONL if the direct lookup misses.</li><li>Skipped JSONL row types (bookkeeping, not conversation): <code>permission-mode</code>, <code>file-history-snapshot</code>, <code>last-prompt</code>, <code>summary</code>, <code>system</code>.</li><li>Adjacent same-role turns are merged — a run of (thinking → tool call → tool call → text) shows under a single <code>### 🤖 assistant</code> header rather than four separate sections.</li><li>Notes mode tool summaries:</li><li><code>Read/Edit/Write/NotebookEdit</code> → file path</li><li><code>Bash</code> → the command (first line, truncated) plus its description</li><li><code>Grep/Glob</code> → the pattern</li><li><code>WebFetch/WebSearch</code> → the URL / query</li><li><code>Task</code>/<code>Agent</code> → the subagent type + description</li><li><code>mcp__...</code> → short MCP tool name</li><li>Unknown → the tool name alone</li><li>Errored tool calls keep a <code>❌ tool error</code> marker so you don&#x27;t lose the fact that something failed.</li></ul>
+<h2>After running</h2>
+<p>Report the script&#x27;s stdout verbatim (mode, project dir, output dir, file list, turn counts). Don&#x27;t paraphrase the conversations themselves — the user is exporting them to read directly. If the script exits non-zero, surface stderr as-is.</p>
+<p>User&#x27;s arguments (if any): current</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 03:19:44 UTC</span></div><ul class="tool-calls"><li>⚙️ <code>python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --session-id &quot;0ad21bd9-cdda-483f-b7a2-b3fc85</code> — Export current session as notes</li></ul>
+<pre><code>mode        : notes
+project dir : /Users/wqeq/.claude/projects/-Users-wqeq-Desktop-project-agent-runtime
+output dir  : /Users/wqeq/Desktop/project/agent-runtime/Conversation History
+written     : 1 file(s), 33 turn(s) total
+  - Conversation History/0ad21bd9-cdda-483f-b7a2-b3fc854f6aa6.md</code></pre></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 03:28:26 UTC</span></div><p>我还是不理解 Runtime 和 Frontend 共用一个 AAD 和不共用一个 AAD 有啥区别？在用 OBO 和不用 OBO 的情况下，分别又有什么不同？你再给我讲一下</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 03:29:42 UTC</span></div><p>好，这两个决策其实是<strong>独立正交</strong>的，我拆开讲你就不会混了。</p>
+<h2>两个独立决策</h2>
+<p><strong>决策 A：AAD app registration 数量</strong></p>
+<ul><li>A1：共用一个 AAD app（frontend 和 runtime 同一个 client_id）</li><li>A2：各自注册，两个 AAD app</li></ul>
+<p><strong>决策 B：runtime 访问下游 Azure 服务（ADF）的方式</strong></p>
+<ul><li>B1：用 OBO（用用户 token 换 ADF token，身份 = 用户）</li><li>B2：不用 OBO（要么 Managed Identity 身份 = 容器，要么 Device Code 身份 = 用户但独立登录）</li></ul>
+<p>这两个决策没关系，能自由组合成四种方案。每一种的 token 流向不同。</p>
+<hr>
+<h2>四种组合的 token 流向</h2>
+<p>我用同一张图的四个版本给你看，<strong>红色 = 需要 OBO 换 token 的地方</strong>。</p>
+<h3>① A1 + B2：共用 AAD + 不 OBO（★我们选的）</h3>
+<pre><code>                一个 AAD app: my-app (client_id=abc)
+User ──▶ EasyAuth ──▶ user_token (aud=abc)
+                         │
+                         ▼
+                     frontend ──原样转发──▶ runtime
+                                             │
+                                             │ 验签 aud==abc ✓
+                                             │ 提取 user_id
+                                             │
+                                             │ 要调 ADF：
+                                             │   service mode → MI (容器身份)
+                                             │   device mode → 用户单独登一次拿 ADF token
+                                             ▼
+                                            ADF</code></pre>
+<p><strong>特点</strong>：一次 OBO 都不做。Token 就 EasyAuth 给的那一张，只拿来验身份。下游用 MI 或 device code，都是&quot;另起炉灶&quot;的 credential。</p>
+<hr>
+<h3>② A1 + B1：共用 AAD + 用 OBO</h3>
+<pre><code>                一个 AAD app: my-app (client_id=abc)
+User ──▶ EasyAuth ──▶ user_token (aud=abc)
+                         │
+                         ▼
+                     frontend ──原样转发──▶ runtime
+                                             │
+                                             │ 验签 aud==abc ✓
+                                             │
+                                             │ 要调 ADF：拿 user_token 做 OBO
+                                             │   ❶ POST AAD /token
+                                             │      assertion=user_token(aud=abc)
+                                             │      + my-app 的 client_secret
+                                             │      scope=management/.default
+                                             │   ❷ 拿回 adf_token(aud=management)
+                                             │
+                                             ▼
+                                            ADF (用用户身份)</code></pre>
+<p><strong>特点</strong>：一次 OBO（runtime→ADF）。用户身份穿到 ADF，ADF 的 RBAC 按这个用户判定。</p>
+<hr>
+<h3>③ A2 + B2：独立 AAD + 不 OBO</h3>
+<pre><code>     frontend-app (abc)              runtime-app (xyz, exposes api://runtime)
+User ──▶ EasyAuth ──▶ user_token (aud=abc)
+                         │
+                         │ frontend 必须做一次 OBO：
+                         │   assertion=user_token(aud=abc)
+                         │   + frontend-app 的 secret
+                         │   scope=api://runtime/.default
+                         │
+                         ▼
+                     runtime_token (aud=xyz)
+                         │
+                         ▼
+                     runtime
+                         │ 验签 aud==xyz ✓
+                         │ 下游走 MI 或 device code（和 ①一样）
+                         ▼
+                        ADF</code></pre>
+<p><strong>特点</strong>：一次 OBO（frontend→runtime）—— 不是为了下游，而是<strong>为了跨 AAD app 边界</strong>。runtime 只信自己 audience 的 token，所以 frontend 必须换一张。下游还是 MI/device code。</p>
+<hr>
+<h3>④ A2 + B1：独立 AAD + 用 OBO</h3>
+<pre><code>     frontend-app (abc)              runtime-app (xyz)
+User ──▶ EasyAuth ──▶ user_token (aud=abc)
+                         │
+                         │ OBO ❶ (frontend→runtime)
+                         ▼
+                     runtime_token (aud=xyz)
+                         │
+                         ▼
+                     runtime
+                         │ 验签 aud==xyz ✓
+                         │
+                         │ OBO ❷ (runtime→ADF)
+                         │   用 runtime_token 换 adf_token(aud=management)
+                         ▼
+                        ADF (用用户身份)</code></pre>
+<p><strong>特点</strong>：<strong>两次 OBO</strong>。身份全程穿透到 ADF，且 frontend 和 runtime 有独立 audience 隔离。最严，最复杂。</p>
+<hr>
+<h2>一张对照表</h2>
+<div class="table-wrap"><table><thead><tr><th></th><th><strong>共用 AAD (A1)</strong></th><th><strong>独立 AAD (A2)</strong></th></tr></thead><tbody><tr><td><strong>不 OBO (B2)</strong></td><td>① 0 次 OBO ✅ <strong>我们选的</strong></td><td>③ 1 次 OBO（frontend→runtime）</td></tr><tr><td><strong>用 OBO (B1)</strong></td><td>② 1 次 OBO（runtime→ADF）</td><td>④ 2 次 OBO（全链条穿透）</td></tr></tbody></table></div>
+<p><strong>OBO 次数 = 你要额外配的 AAD permission 数 + 运行时要做的 token exchange 数</strong>。每多一次 OBO，就多一处可能的 401、多一把 client_secret 要管、多一条 audit 链。</p>
+<hr>
+<h2>两个决策各自的意义</h2>
+<p><strong>A 决策（共用 vs 独立 AAD）</strong> 影响的是<strong>谁能打进 runtime</strong>：</p>
+<ul><li>A1 共用：runtime 的 audience 就是 frontend 的 audience —— 有 frontend token 的都能打 runtime。frontend 和 runtime 视为同一个 app。</li><li>A2 独立：runtime 是一个独立的 &quot;resource&quot;，在 AAD 里可以单独授权。别的 service 想直接调 runtime，去 AAD 要 aud=runtime 的 token 就行，不用装成 frontend。<strong>为&quot;runtime 也要作为独立 service 对外&quot;准备</strong>。</li></ul>
+<p><strong>B 决策（OBO vs 不 OBO）</strong> 影响的是<strong>下游服务看到谁在调用</strong>：</p>
+<ul><li>B1 OBO：ADF 日志里是&quot;用户 Alice 查询&quot;。Alice 在 ADF 没权限就查不到。<strong>合规场景常要求这个</strong>。</li><li>B2 不 OBO：</li><li>Service (MI)：ADF 日志里是&quot;container-X 查询&quot;。Alice 能查的取决于 container-X 的 RBAC，<strong>所有用户看同样的数据</strong>。</li><li>Device code：ADF 日志里还是&quot;用户 Alice 查询&quot;，但 Alice 要额外登一次。和 OBO 效果一样，只是 UX 换工作量（无 OBO 配置换用户多一次点击）。</li></ul>
+<p><strong>所以 A 和 B 正交</strong>：A 关心&quot;进 runtime 要不要换票&quot;，B 关心&quot;调 ADF 要不要以用户身份&quot;。</p>
+<hr>
+<h2>我们选 ① 的三个理由</h2>
+<p>1. <strong>B 决策（不 OBO）</strong>：Device code 已经能覆盖&quot;以用户身份调下游&quot;的刚需。Managed Identity 覆盖&quot;共享数据视图&quot;的常见场景。OBO 的唯一好处是无感，不值得这个复杂度。<br>
+2. <strong>A 决策（共用 AAD）</strong>：MVP 阶段 runtime 只被 frontend 调，没有&quot;独立对外 service&quot;的需求。多一个 AAD app = 多一份 client_secret 管理 + frontend 要多做一次 OBO。<br>
+3. <strong>升级成本低</strong>：①→② 只需加一段 OBO 代码；①→③ 只需注册第二个 AAD app 并改 audience 配置；runtime 业务代码都不用动。所以一开始选最简的，有需要再升。</p>
+<hr>
+<h2>一句话判别该选哪个</h2>
+<ul><li><strong>只有 frontend 调 runtime，数据访问共享就行</strong> → ①（共用 + 不 OBO）</li><li><strong>只有 frontend 调 runtime，但合规要求 user-level audit</strong> → ②（共用 + OBO），或 ① + device code</li><li><strong>runtime 未来要作为 API 给别的 service 调</strong> → 升到 ③ 或 ④</li><li><strong>既对外开放 runtime 又要用户身份穿透到下游</strong> → ④</li></ul>
+<p>你现在的需求是第一条，所以 ① 是对的。未来如果第三条成立（runtime 对外），直接跳 ③，仍然不用 OBO。</p>
+<p>需要我把这四种组合以后写进 <code>auth/</code> 包的文档里，还是现在理解就够？</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 03:35:26 UTC</span></div><p>Base directory for this skill: /Users/wqeq/.claude/skills/export-conversations</p>
+<h1>Export conversation history</h1>
+<p>Converts Claude Code&#x27;s stored JSONL sessions into a self-contained HTML page (default) or Markdown, suitable for re-reading as a learning journal or sharing with someone else — the HTML inlines its CSS, uses only native <code>&lt;details&gt;/&lt;summary&gt;</code> for folding (no JS), embeds no external resources, and opens in any browser offline. The bundled Python script does all parsing and rendering. <strong>Do not</strong> invoke an LLM to rewrite, summarize, or translate the conversations; every turn must be preserved verbatim at the chosen verbosity level.</p>
+<h2>Defaults</h2>
+<p>Running the skill with no arguments does what the user almost always wants:</p>
+<ul><li><strong>scope</strong> = current conversation only</li><li><strong>mode</strong> = <code>notes</code> (compact learning-journal rendering)</li><li><strong>format</strong> = <code>html</code> (single file, ready to double-click or send to someone)</li></ul>
+<h2>Dimensions</h2>
+<p><strong>Scope</strong> — which sessions:</p>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Token in ``</th><th style="text-align:left">Meaning</th></tr></thead><tbody><tr><td style="text-align:left"><em>(none)</em> / <code>current</code></td><td style="text-align:left">Current session only.</td></tr><tr><td style="text-align:left"><code>all</code> / <code>folder</code></td><td style="text-align:left">Every session recorded for the current working directory.</td></tr><tr><td style="text-align:left"><em>(a UUID)</em></td><td style="text-align:left">That specific session.</td></tr></tbody></table></div>
+<p><strong>Mode</strong> — how much tool activity to include:</p>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Token</th><th style="text-align:left">Meaning</th></tr></thead><tbody><tr><td style="text-align:left"><em>(none)</em> / <code>notes</code></td><td style="text-align:left"><strong>Default.</strong> user + assistant text, thinking (folded), tool calls → one-line bullets (<code>📖 Read ...</code>, <code>✏️ Edit ...</code>). Tool stdout dropped. Sidechain skipped.</td></tr><tr><td style="text-align:left"><code>full</code></td><td style="text-align:left">Verbatim — full tool call JSON inputs and tool stdout (truncated past ~4 KB). Sidechain included.</td></tr></tbody></table></div>
+<p><strong>Format</strong> — output file type:</p>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Token</th><th style="text-align:left">Meaning</th></tr></thead><tbody><tr><td style="text-align:left"><em>(none)</em> / <code>html</code></td><td style="text-align:left"><strong>Default.</strong> Single-file HTML, inline CSS, native <code>&lt;details&gt;</code> for fold-outs, light/dark aware, zero external assets → safely shareable as-is.</td></tr><tr><td style="text-align:left"><code>md</code></td><td style="text-align:left">Markdown. Grep-friendly and ideal for feeding back to an LLM later (cheaper in tokens than HTML).</td></tr><tr><td style="text-align:left"><code>both</code></td><td style="text-align:left">Write <code>.html</code> <strong>and</strong> <code>.md</code> side-by-side.</td></tr></tbody></table></div>
+<p>Tokens may appear in any order: <code>/export-conversations all full both</code>, <code>/export-conversations md</code>, <code>/export-conversations &lt;uuid&gt; full</code>, etc.</p>
+<h2>How to run it</h2>
+<p><strong>Default — current session, notes, HTML:</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --session-id &quot;0ad21bd9-cdda-483f-b7a2-b3fc854f6aa6&quot;</code></pre>
+<p><strong>All sessions for this folder:</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --all</code></pre>
+<p><strong>Markdown instead of HTML:</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --session-id &quot;0ad21bd9-cdda-483f-b7a2-b3fc854f6aa6&quot; --format md</code></pre>
+<p><strong>Full verbatim log with every tool call JSON:</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --session-id &quot;0ad21bd9-cdda-483f-b7a2-b3fc854f6aa6&quot; --mode full</code></pre>
+<p><strong>Both formats, whole folder, full mode:</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --all --mode full --format both</code></pre>
+<p><strong>Explicit session id (UUID argument):</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --session-id &quot;&lt;uuid&gt;&quot;</code></pre>
+<p>Output path: <code>&lt;cwd&gt;/Conversation History/&lt;session-id&gt;.{html,md}</code>. Folder is created if missing; existing files with the same name are overwritten.</p>
+<h2>Behavior details</h2>
+<ul><li><strong>Project folder lookup</strong>: <code>~/.claude/projects/&lt;encoded-cwd&gt;/</code> where <code>/</code> and <code>.</code> in cwd become <code>-</code>. Falls back to scanning project folders and matching on the <code>cwd</code> field inside each JSONL if the direct lookup misses.</li><li><strong>Skipped JSONL row types</strong> (bookkeeping, not conversation): <code>permission-mode</code>, <code>file-history-snapshot</code>, <code>last-prompt</code>, <code>summary</code>, <code>system</code>.</li><li><strong>Turn merging</strong>: adjacent same-role entries are merged, so a run of (thinking → tool call → tool call → text) shows under a single <code>assistant</code> header rather than fragmenting.</li><li><strong>Notes-mode tool summaries</strong>: <code>Read/Edit/Write/NotebookEdit</code> → file path; <code>Bash</code> → first line of the command + description; <code>Grep/Glob</code> → pattern; <code>WebFetch/WebSearch</code> → URL or query; <code>Task</code>/<code>Agent</code> → subagent type + description; <code>mcp__...</code> → short MCP tool name; errored calls keep a <code>❌ tool error</code> marker so failures aren&#x27;t lost.</li><li><strong>HTML is self-contained</strong>: one file, inlined CSS (~4 KB), no JS, no external fonts (system font stack), no remote assets, light/dark aware via <code>prefers-color-scheme</code>. Open in any browser offline; attach to an email, AirDrop, or Slack drop without broken links.</li><li><strong>Token cost for LLMs</strong>: HTML is ~1.5–1.8× the token count of Markdown. If the user plans to feed the export back to an LLM later, suggest <code>--format md</code> (or <code>both</code>).</li></ul>
+<h2>After running</h2>
+<p>Report the script&#x27;s stdout verbatim (mode, format, project dir, output dir, file list, turn count). Don&#x27;t paraphrase the conversations themselves — the user is exporting them precisely so they can read them directly. If the script exits non-zero, surface stderr as-is.</p>
+<p>User&#x27;s arguments (if any):</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 03:35:31 UTC</span></div><ul class="tool-calls"><li>⚙️ <code>python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --session-id &quot;0ad21bd9-cdda-483f-b7a2-b3fc85</code> — Export current session to HTML (notes mode)</li></ul>
+<p>导出完成：</p>
+<pre><code>mode        : notes
+format      : html
+project dir : /Users/wqeq/.claude/projects/-Users-wqeq-Desktop-project-agent-runtime
+output dir  : /Users/wqeq/Desktop/project/agent-runtime/Conversation History
+written     : 1 file(s), 38 turn(s) total
+  - Conversation History/0ad21bd9-cdda-483f-b7a2-b3fc854f6aa6.html</code></pre></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 03:46:57 UTC</span></div><p>那假设我有 10 个 agent runtime，针对不同的 skills 和 MCP。如果未来这些 agent runtime 都要成为对外的 service，岂不是每一个 agent runtime 都需要自己独立的 AAD application？</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 03:48:11 UTC</span></div><p>不是。你把 &quot;AAD app&quot; 和 &quot;deployment&quot; 画了等号，其实不是这么回事。</p>
+<h2>AAD app 不是 deployment 边界，是<strong>信任边界</strong></h2>
+<p>先澄清一个概念：<strong>一个 AAD app registration 代表&quot;一个 identity/resource&quot;</strong>，不是&quot;一台服务器&quot;。</p>
+<ul><li>10 个容器都跑同一份代码、同一个团队拥有、同种数据敏感级别 → 在 AAD 看来这是<strong>一个 logical service</strong>，一个 AAD app 就够</li><li>10 个容器分属不同团队、不同数据合规等级、对外 API 契约不同 → 这是 <strong>10 个 service</strong>，才需要 10 个 AAD app</li></ul>
+<p>你 10 个 agent runtime 是&quot;同一个 runtime 的不同配置&quot;（换 skill 换 MCP），更像前者。</p>
+<h2>三种可选方案（从简到严）</h2>
+<h3>方案 Y：一个 AAD app，URL 路由区分 runtime</h3>
+<pre><code>        一个 AAD app: agent-runtime (client_id=abc)
+                       │
+             callers 统一要 aud=abc 的 token
+                       │
+                       ▼
+          ┌────────────┼────────────┐
+          │            │            │
+     runtime-adf  runtime-sf  runtime-bi  ...
+     aud==abc✓   aud==abc✓   aud==abc✓</code></pre>
+<p><strong>特点</strong>：10 个 container 共用一个 audience，任何有 token 的 caller 都能调任何 runtime，&quot;该调哪个&quot;靠 URL 区分。<br>
+<strong>适用</strong>：10 个 runtime 信任级别一样，内部 authZ（&quot;这个用户能不能查 ADF&quot;）在 runtime 代码里判。<br>
+<strong>运维成本</strong>：1 个 app registration，1 把 client_secret。</p>
+<h3>方案 X：一个 AAD app + 多个 scope（推荐的中间路线）</h3>
+<pre><code>        一个 AAD app: agent-runtime
+        Expose API 里定义多个 scope:
+            - runtime.adf
+            - runtime.snowflake
+            - runtime.bi
+                       │
+                       ▼
+    caller 想调 runtime-adf:
+      去 AAD 要 scope=agent-runtime/runtime.adf 的 token
+      token 的 scp claim 里会带 &quot;runtime.adf&quot;
+                       │
+                       ▼
+    runtime-adf 验 token:
+      aud==abc ✓
+      scp 包含 &quot;runtime.adf&quot; ✓  ← 这一步挡住没权限的 caller</code></pre>
+<p><strong>特点</strong>：依然 1 个 AAD app，但 AAD 层面就能控制&quot;哪个 caller 能调哪个 runtime&quot;（授 scope 时可选）。每个 runtime 代码里验自己的 scope，互不越权。<br>
+<strong>适用</strong>：10 个 runtime 逻辑上是同一类 service，但你想做 AAD-level 的细粒度授权（比如&quot;财务 team 的 service 能调 runtime-finance，其他不能&quot;）。<br>
+<strong>运维成本</strong>：1 个 app registration，加 scope 定义（在 AAD portal 点几下），多个 scope 名字要维护。</p>
+<h3>方案 Z：每个 runtime 独立 AAD app</h3>
+<pre><code>agent-runtime-adf        agent-runtime-sf         agent-runtime-bi
+(client_id=xxx)          (client_id=yyy)          (client_id=zzz)
+      │                        │                        │
+      ▼                        ▼                        ▼
+   aud==xxx✓               aud==yyy✓               aud==zzz✓</code></pre>
+<p><strong>特点</strong>：彻底隔离。A runtime 的 token 打 B runtime 直接 401。不同团队可以独立管理各自的 app。<br>
+<strong>适用</strong>：10 个 runtime 属于不同 owner / 不同合规域 / 对外 API 有独立 SLA。<br>
+<strong>运维成本</strong>：10 份 app registration、10 把 client_secret、10 套 API permission 配置。每加一个新 runtime = 多一份 AAD 工单。</p>
+<h2>对比表</h2>
+<div class="table-wrap"><table><thead><tr><th></th><th>方案 Y</th><th>方案 X</th><th>方案 Z</th></tr></thead><tbody><tr><td>AAD app 数量</td><td>1</td><td>1</td><td>N</td></tr><tr><td>client_secret 数量</td><td>1</td><td>1</td><td>N</td></tr><tr><td>Scope 定义</td><td>无</td><td>每 runtime 一个</td><td>N/A</td></tr><tr><td>AAD-level 授权粒度</td><td>粗（要么都能要么都不能）</td><td>细（按 scope）</td><td>最细（按 app）</td></tr><tr><td>加新 runtime 的 AAD 工作量</td><td>0</td><td>加一个 scope</td><td>注册新 app + 配 permission</td></tr><tr><td>适合&quot;10 个同类 runtime&quot;</td><td>✅</td><td>✅</td><td>过度</td></tr><tr><td>适合&quot;10 个不同 owner&quot;</td><td>❌</td><td>⚠️</td><td>✅</td></tr></tbody></table></div>
+<h2>针对你的情况：我推荐方案 X</h2>
+<p>理由：</p>
+<p>1. <strong>10 个 runtime 是同一份代码</strong> → 不是 10 个 service 的信任边界，是 10 个配置<br>
+2. 但你肯定会想<strong>区分谁能调哪个 runtime</strong>（不然 finance team 的 token 能打 engineering team 的 runtime，乱套）<br>
+3. 方案 X 一次性设好 scope schema，加新 runtime = 加一行 scope 定义，<strong>不需要新注册 AAD app</strong><br>
+4. client_secret 还是 1 把，ops 压力不爆炸<br>
+5. 将来某个 runtime 真的要&quot;脱队&quot;（独立合规域）时，再把它升到方案 Z，其他 9 个不受影响</p>
+<h2>一个重要区分：Managed Identity 是另一回事</h2>
+<p>别跟 AAD app registration 混：</p>
+<div class="table-wrap"><table><thead><tr><th>概念</th><th>作用</th><th>数量</th></tr></thead><tbody><tr><td><strong>AAD app registration</strong></td><td>定义&quot;这个 service 是谁&quot;，用于<strong>被别人调</strong>时验身份</td><td>10 runtime 可能共用 1 个（方案 X/Y）或各自 1 个（方案 Z）</td></tr><tr><td><strong>Managed Identity</strong></td><td>定义&quot;这个 container 自己是谁&quot;，用于<strong>调下游 Azure 服务</strong>时作为 actor</td><td><strong>必须每 container 1 个</strong>，因为 MI 是 Azure 资源 + container 的绑定关系</td></tr></tbody></table></div>
+<p>你 10 个 container 即使共用 AAD app，MI 也是<strong>每个独立的</strong>。这样每个 container 调 ADF / Storage 时有独立身份，RBAC 可分别配。</p>
+<p>所以你要做的是：</p>
+<ul><li><strong>AAD app</strong>：1 个（方案 X）</li><li><strong>Managed Identity</strong>：10 个（Azure 部署时自动给每个 App Service / Container App 分配一个 system-assigned MI）</li><li><strong>Client secret</strong>：1 把（属于那个 AAD app）</li><li><strong>Scope 定义</strong>：10 个（每个 runtime 一条）</li></ul>
+<h2>auth.json / 部署配置层面</h2>
+<p>每个 agent 在自己的 config 里多声明一个字段：</p>
+<pre><code class="lang-json">{
+  &quot;runtime&quot;: {
+    &quot;audience&quot;: &quot;api://agent-runtime&quot;,
+    &quot;required_scope&quot;: &quot;runtime.adf&quot;   // ← 这个 runtime 要求 token 含这个 scope
+  },
+  &quot;providers&quot;: {
+    ...
+  }
+}</code></pre>
+<p>runtime 代码的 <code>validate_jwt()</code> 除了验 aud 还要验 <code>required_scope</code> 在 <code>scp</code> claim 里。加 runtime = 加 scope + 填这个字段，别的不动。</p>
+<hr>
+<p><strong>一句话回答你原问题</strong>：不需要每个 runtime 独立 AAD app。<strong>同一份代码的多份部署 = 一个 AAD app，不同 runtime 用 scope 区分</strong>。只有当某个 runtime 确实属于&quot;不同信任域&quot;时才拆出独立 AAD app。</p>
+<p>要我把这个 scope-based 的思路写进最终 plan 里作为&quot;runtime 对外 service 化时的升级路径&quot;吗？</p></div>
+<div class="turn user"><div class="turn-header"><span class="role user">🧑 user</span><span class="timestamp">2026-04-22 03:49:01 UTC</span></div><p>Base directory for this skill: /Users/wqeq/.claude/skills/export-conversations</p>
+<h1>Export conversation history</h1>
+<p>Converts Claude Code&#x27;s stored JSONL sessions into a self-contained HTML page (default) or Markdown, suitable for re-reading as a learning journal or sharing with someone else — the HTML inlines its CSS, uses only native <code>&lt;details&gt;/&lt;summary&gt;</code> for folding (no JS), embeds no external resources, and opens in any browser offline. The bundled Python script does all parsing and rendering. <strong>Do not</strong> invoke an LLM to rewrite, summarize, or translate the conversations; every turn must be preserved verbatim at the chosen verbosity level.</p>
+<h2>Defaults</h2>
+<p>Running the skill with no arguments does what the user almost always wants:</p>
+<ul><li><strong>scope</strong> = current conversation only</li><li><strong>mode</strong> = <code>notes</code> (compact learning-journal rendering)</li><li><strong>format</strong> = <code>html</code> (single file, ready to double-click or send to someone)</li></ul>
+<h2>Dimensions</h2>
+<p><strong>Scope</strong> — which sessions:</p>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Token in ``</th><th style="text-align:left">Meaning</th></tr></thead><tbody><tr><td style="text-align:left"><em>(none)</em> / <code>current</code></td><td style="text-align:left">Current session only.</td></tr><tr><td style="text-align:left"><code>all</code> / <code>folder</code></td><td style="text-align:left">Every session recorded for the current working directory.</td></tr><tr><td style="text-align:left"><em>(a UUID)</em></td><td style="text-align:left">That specific session.</td></tr></tbody></table></div>
+<p><strong>Mode</strong> — how much tool activity to include:</p>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Token</th><th style="text-align:left">Meaning</th></tr></thead><tbody><tr><td style="text-align:left"><em>(none)</em> / <code>notes</code></td><td style="text-align:left"><strong>Default.</strong> user + assistant text, thinking (folded), tool calls → one-line bullets (<code>📖 Read ...</code>, <code>✏️ Edit ...</code>). Tool stdout dropped. Sidechain skipped.</td></tr><tr><td style="text-align:left"><code>full</code></td><td style="text-align:left">Verbatim — full tool call JSON inputs and tool stdout (truncated past ~4 KB). Sidechain included.</td></tr></tbody></table></div>
+<p><strong>Format</strong> — output file type:</p>
+<div class="table-wrap"><table><thead><tr><th style="text-align:left">Token</th><th style="text-align:left">Meaning</th></tr></thead><tbody><tr><td style="text-align:left"><em>(none)</em> / <code>html</code></td><td style="text-align:left"><strong>Default.</strong> Single-file HTML, inline CSS, native <code>&lt;details&gt;</code> for fold-outs, light/dark aware, zero external assets → safely shareable as-is.</td></tr><tr><td style="text-align:left"><code>md</code></td><td style="text-align:left">Markdown. Grep-friendly and ideal for feeding back to an LLM later (cheaper in tokens than HTML).</td></tr><tr><td style="text-align:left"><code>both</code></td><td style="text-align:left">Write <code>.html</code> <strong>and</strong> <code>.md</code> side-by-side.</td></tr></tbody></table></div>
+<p>Tokens may appear in any order: <code>/export-conversations all full both</code>, <code>/export-conversations md</code>, <code>/export-conversations &lt;uuid&gt; full</code>, etc.</p>
+<h2>How to run it</h2>
+<p><strong>Default — current session, notes, HTML:</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --session-id &quot;0ad21bd9-cdda-483f-b7a2-b3fc854f6aa6&quot;</code></pre>
+<p><strong>All sessions for this folder:</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --all</code></pre>
+<p><strong>Markdown instead of HTML:</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --session-id &quot;0ad21bd9-cdda-483f-b7a2-b3fc854f6aa6&quot; --format md</code></pre>
+<p><strong>Full verbatim log with every tool call JSON:</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --session-id &quot;0ad21bd9-cdda-483f-b7a2-b3fc854f6aa6&quot; --mode full</code></pre>
+<p><strong>Both formats, whole folder, full mode:</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --all --mode full --format both</code></pre>
+<p><strong>Explicit session id (UUID argument):</strong></p>
+<pre><code class="lang-bash">python3 &quot;/Users/wqeq/.claude/skills/export-conversations/scripts/export.py&quot; --session-id &quot;&lt;uuid&gt;&quot;</code></pre>
+<p>Output path: <code>&lt;cwd&gt;/Conversation History/&lt;session-id&gt;.{html,md}</code>. Folder is created if missing; existing files with the same name are overwritten.</p>
+<h2>Behavior details</h2>
+<ul><li><strong>Project folder lookup</strong>: <code>~/.claude/projects/&lt;encoded-cwd&gt;/</code> where <code>/</code> and <code>.</code> in cwd become <code>-</code>. Falls back to scanning project folders and matching on the <code>cwd</code> field inside each JSONL if the direct lookup misses.</li><li><strong>Skipped JSONL row types</strong> (bookkeeping, not conversation): <code>permission-mode</code>, <code>file-history-snapshot</code>, <code>last-prompt</code>, <code>summary</code>, <code>system</code>.</li><li><strong>Slash-command noise stripped unconditionally</strong>: user messages whose content prefix is <code>&lt;local-command-caveat&gt;</code>, <code>&lt;local-command-stdout&gt;</code>, <code>&lt;local-command-stderr&gt;</code>, <code>&lt;command-message&gt;</code>, <code>&lt;command-name&gt;</code>, or <code>&lt;command-args&gt;</code> are dropped. These are Claude Code&#x27;s serialization of <code>/context</code>, <code>/cost</code>, <code>/model</code>, etc. — the &quot;DO NOT respond to these&quot; Caveat note plus the ANSI-colored terminal output. Never part of the conversation you&#x27;re trying to capture. Detection is prefix-based, so a message that merely quotes these tags later in its body (for example, discussing the issue with Claude) is preserved.</li><li><strong>Turn merging</strong>: adjacent same-role entries are merged, so a run of (thinking → tool call → tool call → text) shows under a single <code>assistant</code> header rather than fragmenting.</li><li><strong>Notes-mode tool summaries</strong>: <code>Read/Edit/Write/NotebookEdit</code> → file path; <code>Bash</code> → first line of the command + description; <code>Grep/Glob</code> → pattern; <code>WebFetch/WebSearch</code> → URL or query; <code>Task</code>/<code>Agent</code> → subagent type + description; <code>mcp__...</code> → short MCP tool name; errored calls keep a <code>❌ tool error</code> marker so failures aren&#x27;t lost.</li><li><strong>HTML is self-contained</strong>: one file, inlined CSS (~4 KB), no JS, no external fonts (system font stack), no remote assets, light/dark aware via <code>prefers-color-scheme</code>. Open in any browser offline; attach to an email, AirDrop, or Slack drop without broken links.</li><li><strong>Token cost for LLMs</strong>: HTML is ~1.5–1.8× the token count of Markdown. If the user plans to feed the export back to an LLM later, suggest <code>--format md</code> (or <code>both</code>).</li></ul>
+<h2>After running</h2>
+<p>Report the script&#x27;s stdout verbatim (mode, format, project dir, output dir, file list, turn count). Don&#x27;t paraphrase the conversations themselves — the user is exporting them precisely so they can read them directly. If the script exits non-zero, surface stderr as-is.</p>
+<p>User&#x27;s arguments (if any):</p></div>
+<div class="turn assistant"><div class="turn-header"><span class="role assistant">🤖 assistant</span><span class="timestamp">2026-04-22 03:49:10 UTC</span></div><ul class="tool-calls"><li>⚙️ <code>ls -lt /Users/wqeq/.claude/projects/-Users-wqeq-Desktop-project-agent-runtime/*.jsonl 2&gt;/dev/null | head -5</code> — Find most recent session file</li></ul></div>
+</body>
+</html>
