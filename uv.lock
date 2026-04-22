@@ -19,6 +19,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "langsmith" },
     { name = "mcp" },
+    { name = "msal" },
     { name = "pyjwt", extra = ["crypto"] },
     { name = "python-dotenv" },
     { name = "sse-starlette" },
@@ -52,6 +53,7 @@ requires-dist = [
     { name = "httpx", marker = "extra == 'test'", specifier = ">=0.27" },
     { name = "langsmith", specifier = ">=0.2.0" },
     { name = "mcp", specifier = ">=1.26.0" },
+    { name = "msal", specifier = ">=1.28" },
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.8.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=9.0.2" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
@@ -671,6 +673,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/fc/6d/62e76bbb8144d6ed86e202b5edd8a4cb631e7c8130f3f4893c3f90262b10/mcp-1.26.0.tar.gz", hash = "sha256:db6e2ef491eecc1a0d93711a76f28dec2e05999f93afd48795da1c1137142c66", size = 608005, upload-time = "2026-01-24T19:40:32.468Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fd/d9/eaa1f80170d2b7c5ba23f3b59f766f3a0bb41155fbc32a69adfa1adaaef9/mcp-1.26.0-py3-none-any.whl", hash = "sha256:904a21c33c25aa98ddbeb47273033c435e595bbacfdb177f4bd87f6dceebe1ca", size = 233615, upload-time = "2026-01-24T19:40:30.652Z" },
+]
+
+[[package]]
+name = "msal"
+version = "1.36.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "pyjwt", extra = ["crypto"] },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/de/cb/b02b0f748ac668922364ccb3c3bff5b71628a05f5adfec2ba2a5c3031483/msal-1.36.0.tar.gz", hash = "sha256:3f6a4af2b036b476a4215111c4297b4e6e236ed186cd804faefba23e4990978b", size = 174217, upload-time = "2026-04-09T10:20:33.525Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2a/d3/414d1f0a5f6f4fe5313c2b002c54e78a3332970feb3f5fed14237aa17064/msal-1.36.0-py3-none-any.whl", hash = "sha256:36ecac30e2ff4322d956029aabce3c82301c29f0acb1ad89b94edcabb0e58ec4", size = 121547, upload-time = "2026-04-09T10:20:32.336Z" },
 ]
 
 [[package]]

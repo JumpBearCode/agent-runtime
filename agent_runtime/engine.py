@@ -36,7 +36,13 @@ from typing import AsyncGenerator, Optional
 from langsmith import traceable
 from langsmith.run_helpers import get_current_run_tree
 
-from auth import UserIdentity, build_providers, set_current_user, reset_current_user
+from auth import (
+    UserIdentity,
+    build_providers,
+    set_current_user,
+    reset_current_user,
+    set_prompt_callback,
+)
 
 from .core import config
 from .core.hooks import AbortRound, HookManager, HookResult, PreToolHook, _preview, validate_hitl
@@ -48,7 +54,7 @@ from .core.todo import Todo
 from .core.tracking import TokenTracker
 
 from .api.schemas import (
-    ConfirmRequest, Done, EngineEvent, Error, Status,
+    ConfirmRequest, DeviceFlowRequest, Done, EngineEvent, Error, Status,
     TextDelta, TextStop, ThinkingDelta, ThinkingStart, ThinkingStop,
     TokenUsage, ToolCall, ToolResult,
 )
@@ -390,6 +396,18 @@ class AgentEngine:
             "run_id": trace_id if _is_uuid(trace_id) else None,
         }
 
+        def _forward_device_prompt(prompt):
+            """device_code provider → SSE. Pushes a device_flow_request
+            event into the same queue the frontend is reading."""
+            on_event({
+                "type": "device_flow_request",
+                "provider": prompt.provider,
+                "verification_uri": prompt.verification_uri,
+                "user_code": prompt.user_code,
+                "expires_in": prompt.expires_in,
+                "message": prompt.message,
+            })
+
         def _run_sync():
             # ContextVar does not cross ThreadPoolExecutor.submit — re-bind
             # the UserIdentity on this thread so downstream auth-aware tools
@@ -397,6 +415,7 @@ class AgentEngine:
             user_token = set_current_user(user) if user is not None else None
             tools_mod.set_thread_hooks(hooks)
             tools_mod.set_thread_todo(todo)
+            set_prompt_callback(_forward_device_prompt)
             try:
                 _traced_agent_round(
                     messages, self.system, tracker, on_event,
@@ -408,6 +427,7 @@ class AgentEngine:
             finally:
                 tools_mod.set_thread_hooks(None)
                 tools_mod.set_thread_todo(None)
+                set_prompt_callback(None)
                 if user_token is not None:
                     reset_current_user(user_token)
                 loop.call_soon_threadsafe(queue.put_nowait, None)
@@ -456,6 +476,13 @@ _EVENT_MAP = {
         tool_name=d.get("tool_name", ""),
         tool_args=d.get("tool_args", {}),
         preview=d.get("preview", ""),
+    ),
+    "device_flow_request": lambda d: DeviceFlowRequest(
+        provider=d.get("provider", ""),
+        verification_uri=d.get("verification_uri", ""),
+        user_code=d.get("user_code", ""),
+        expires_in=int(d.get("expires_in", 0) or 0),
+        message=d.get("message", ""),
     ),
 }
 

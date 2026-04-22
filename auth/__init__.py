@@ -11,8 +11,10 @@ from .cache import TokenCache, TokenRecord, default_cache
 from .contextual import ContextualCredential, with_auth
 from .config import AuthConfig, load_auth_config
 from .middleware import inject_auth_for_mcp
+from .device_flow import DevicePrompt, emit_prompt, set_prompt_callback
 from .providers import (
     AuthRequired,
+    AzureDeviceProvider,
     AzureServiceProvider,
     Provider,
     ProviderMode,
@@ -41,11 +43,16 @@ __all__ = [
     "AuthConfig",
     "load_auth_config",
     "inject_auth_for_mcp",
+    # device flow plumbing
+    "DevicePrompt",
+    "emit_prompt",
+    "set_prompt_callback",
     # providers
     "AuthRequired",
     "Provider",
     "ProviderMode",
     "AzureServiceProvider",
+    "AzureDeviceProvider",
     "build_providers",
     "get_provider",
 ]

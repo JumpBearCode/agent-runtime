@@ -7,6 +7,7 @@ the provider for a token before every MCP tool call.
 
 from .base import AuthRequired, Provider, ProviderMode
 from .azure_service import AzureServiceProvider
+from .azure_device import AzureDeviceProvider
 from .registry import build_providers, get_provider
 
 __all__ = [
@@ -14,6 +15,7 @@ __all__ = [
     "Provider",
     "ProviderMode",
     "AzureServiceProvider",
+    "AzureDeviceProvider",
     "build_providers",
     "get_provider",
 ]

@@ -95,6 +95,23 @@ class ConfirmRequest(EngineEvent):
 
 
 @dataclass
+class DeviceFlowRequest(EngineEvent):
+    """Sent over SSE when a device_code auth provider needs the user to log in.
+
+    Unlike ConfirmRequest, no callback is expected — the runtime is
+    already polling the IdP in the background. Frontend should open the
+    verification URL in a new tab (or show a modal with URL+user_code)
+    so the user can complete login.
+    """
+    type: str = "device_flow_request"
+    provider:         str = ""
+    verification_uri: str = ""
+    user_code:        str = ""
+    expires_in:       int = 0
+    message:          str = ""
+
+
+@dataclass
 class Error(EngineEvent):
     type: str = "error"
     message: str = ""
