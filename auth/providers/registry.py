@@ -49,22 +49,50 @@ def build_providers(providers_cfg: dict[str, dict[str, Any]]) -> dict[str, Provi
             built[name] = AzureServiceProvider(name, scope=scope)
 
         elif mode == "device_code":
+            if not cfg.get("tenant") or not cfg.get("client_id"):
+                raise ValueError(
+                    f"provider {name!r}: device_code requires tenant and "
+                    f"client_id (AAD app registration)"
+                )
+            common = dict(
+                tenant=cfg["tenant"],
+                client_id=cfg["client_id"],
+            )
             if ptype == "azure":
-                if not cfg.get("tenant") or not cfg.get("client_id"):
-                    raise ValueError(
-                        f"provider {name!r}: azure device_code requires "
-                        f"tenant and client_id"
-                    )
                 built[name] = AzureDeviceProvider(
                     name,
-                    tenant=cfg["tenant"],
-                    client_id=cfg["client_id"],
                     scope=cfg.get("scope", "https://management.azure.com/.default"),
+                    **common,
+                )
+            elif ptype == "snowflake":
+                from .snowflake_device import SnowflakeDeviceProvider
+                if not cfg.get("scope") or not cfg.get("account"):
+                    raise ValueError(
+                        f"provider {name!r}: snowflake device_code requires "
+                        f"scope (External OAuth resource) and account"
+                    )
+                built[name] = SnowflakeDeviceProvider(
+                    name,
+                    scope=cfg["scope"],
+                    account=cfg["account"],
+                    **common,
+                )
+            elif ptype == "ado":
+                from .ado_device import AdoDeviceProvider
+                if not cfg.get("org"):
+                    raise ValueError(
+                        f"provider {name!r}: ado device_code requires org"
+                    )
+                built[name] = AdoDeviceProvider(
+                    name,
+                    org=cfg["org"],
+                    scope=cfg.get("scope"),   # default in AdoDeviceProvider
+                    **common,
                 )
             else:
                 raise ValueError(
-                    f"provider {name!r}: device_code type {ptype!r} not yet "
-                    f"supported (expected azure). snowflake/ado land in PR5."
+                    f"provider {name!r}: device_code type {ptype!r} not "
+                    f"supported. Known: azure, snowflake, ado."
                 )
 
         else:

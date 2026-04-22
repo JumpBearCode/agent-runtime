@@ -8,6 +8,8 @@ the provider for a token before every MCP tool call.
 from .base import AuthRequired, Provider, ProviderMode
 from .azure_service import AzureServiceProvider
 from .azure_device import AzureDeviceProvider
+from .snowflake_device import SnowflakeDeviceProvider
+from .ado_device import AdoDeviceProvider
 from .registry import build_providers, get_provider
 
 __all__ = [
@@ -16,6 +18,8 @@ __all__ = [
     "ProviderMode",
     "AzureServiceProvider",
     "AzureDeviceProvider",
+    "SnowflakeDeviceProvider",
+    "AdoDeviceProvider",
     "build_providers",
     "get_provider",
 ]

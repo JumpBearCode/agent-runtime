@@ -190,7 +190,10 @@ def test_registry_rejects_azure_device_without_tenant():
 
 def test_registry_rejects_unknown_device_type():
     clear_providers()
-    with pytest.raises(ValueError, match="not yet supported"):
+    with pytest.raises(ValueError, match="not supported"):
         build_providers({
-            "sf": {"mode": "device_code", "type": "snowflake"},
+            "x": {
+                "mode": "device_code", "type": "some-future-idp",
+                "tenant": "t", "client_id": "c",
+            },
         })

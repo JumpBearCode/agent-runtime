@@ -13,11 +13,13 @@ from .config import AuthConfig, load_auth_config
 from .middleware import inject_auth_for_mcp
 from .device_flow import DevicePrompt, emit_prompt, set_prompt_callback
 from .providers import (
+    AdoDeviceProvider,
     AuthRequired,
     AzureDeviceProvider,
     AzureServiceProvider,
     Provider,
     ProviderMode,
+    SnowflakeDeviceProvider,
     build_providers,
     get_provider,
 )
@@ -53,6 +55,8 @@ __all__ = [
     "ProviderMode",
     "AzureServiceProvider",
     "AzureDeviceProvider",
+    "SnowflakeDeviceProvider",
+    "AdoDeviceProvider",
     "build_providers",
     "get_provider",
 ]
