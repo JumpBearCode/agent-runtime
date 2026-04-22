@@ -59,6 +59,12 @@ class MCPManager:
     def tool_names(self) -> set[str]:
         return set(self._tools.keys())
 
+    def server_for_tool(self, qualified_name: str) -> str | None:
+        """Return the MCP server that owns this qualified tool name, or
+        None if unknown. Used by the auth middleware to look up provider
+        bindings from auth.json."""
+        return self._tools.get(qualified_name)
+
     def load_config(self, config_path: Path) -> dict:
         """Load MCP server config from JSON file."""
         if not config_path.exists():

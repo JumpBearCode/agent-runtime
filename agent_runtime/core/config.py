@@ -144,3 +144,13 @@ def resolve_hitl() -> set[str]:
         logger.warning("%s: expected a JSON array", path)
         return set()
     return set(data)
+
+
+def resolve_auth_config():
+    """Load auth.json from SETTINGS_DIR.
+
+    Missing file → empty AuthConfig (no providers, no bindings) — the
+    runtime still works; MCPs that would need a token just don't get one.
+    """
+    from auth import load_auth_config
+    return load_auth_config(SETTINGS_DIR / "auth.json")

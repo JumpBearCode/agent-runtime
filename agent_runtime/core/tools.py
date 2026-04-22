@@ -1,5 +1,6 @@
 """Tool implementations, schemas, and dispatch table."""
 
+import logging
 import subprocess
 import threading
 from pathlib import Path
@@ -8,11 +9,14 @@ from langsmith import traceable
 
 from . import config
 
+logger = logging.getLogger(__name__)
+
 # Module-level wiring set by the engine at startup.
 SKILL_LOADER = None  # SkillLoader instance — read-only, safe to share
 MCP = None           # MCPManager instance — read-only from agent's POV
 TODO = None          # Fallback Todo (used only if no thread-local set)
 HOOKS = None         # Fallback HookManager (used only if no thread-local set)
+AUTH_CONFIG = None   # auth.AuthConfig — set by engine; None disables auth injection
 
 # Per-thread state. The engine binds these inside every agent thread so
 # concurrent chats never cross-contaminate (each chat has its own Todo and
@@ -137,6 +141,27 @@ def rebuild_tools():
         TOOLS.extend(MCP.tool_schemas)
 
 
+def _auth_kwargs_for_mcp_tool(qualified_name: str) -> dict:
+    """If the MCP server this tool belongs to is bound to an auth provider
+    in auth.json, return `{_auth_token, _auth_expires_at}` for the current
+    request's user. Otherwise return {}. See auth/middleware.py."""
+    if AUTH_CONFIG is None or MCP is None:
+        return {}
+    from auth import inject_auth_for_mcp
+
+    server_name = MCP.server_for_tool(qualified_name) if hasattr(MCP, "server_for_tool") else None
+    if not server_name:
+        return {}
+    try:
+        return inject_auth_for_mcp(AUTH_CONFIG, server_name)
+    except Exception as e:
+        # Device-flow (AuthRequired) support lands in PR4; for now a cache
+        # miss on a device_code provider just logs + returns no kwargs,
+        # which will cause the MCP tool to fail its own auth check.
+        logger.warning("auth injection failed for %s: %s", qualified_name, e)
+        return {}
+
+
 @traceable(run_type="tool")
 def _traced_dispatch(name: str, args: dict) -> str:
     """Inner dispatch, wrapped as a LangSmith tool span.
@@ -155,7 +180,9 @@ def _traced_dispatch(name: str, args: dict) -> str:
     if handler:
         return handler(**args)
     if MCP and name in MCP.tool_names:
-        return MCP.call_tool(name, args)
+        # Merge auth kwargs (invisible to the LLM) into the call payload.
+        call_args = {**args, **_auth_kwargs_for_mcp_tool(name)}
+        return MCP.call_tool(name, call_args)
     return f"Unknown tool: {name}"
 
 

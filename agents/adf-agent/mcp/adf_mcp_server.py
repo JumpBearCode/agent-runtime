@@ -1,15 +1,27 @@
 """
 Azure Data Factory MCP Server
 Wraps the Azure Data Factory SDK and exposes ADF resources as MCP tools via FastMCP.
+
+Auth model
+----------
+This subprocess does NOT own a credential. It holds one long-lived
+DataFactoryManagementClient whose credential is a `ContextualCredential`
+from the top-level `auth` package. The runtime middleware injects
+`_auth_token` / `_auth_expires_at` kwargs on every tool call; the
+`@with_auth` decorator stashes them in a thread-local that
+ContextualCredential reads when the Azure SDK asks for a token. After the
+call, the decorator clears the thread-local. Cross-user state cannot
+survive a tool call.
 """
 
 import os
 from typing import Any
 
-from azure.identity import DefaultAzureCredential
 from azure.mgmt.datafactory import DataFactoryManagementClient
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
+
+from auth import ContextualCredential, with_auth
 
 load_dotenv()
 
@@ -21,17 +33,15 @@ RESOURCE_GROUP: str = os.environ["ADF_RESOURCE_GROUP"]
 FACTORY_NAME: str = os.environ["ADF_FACTORY_NAME"]
 
 # ---------------------------------------------------------------------------
-# ADF client (lazy singleton)
+# ADF client — built once, auth comes from ContextualCredential thread-local
 # ---------------------------------------------------------------------------
-_client: DataFactoryManagementClient | None = None
+_credential = ContextualCredential()
+_client: DataFactoryManagementClient = DataFactoryManagementClient(
+    _credential, SUBSCRIPTION_ID,
+)
 
 
 def _get_client() -> DataFactoryManagementClient:
-    """Return a cached DataFactoryManagementClient authenticated via DefaultAzureCredential."""
-    global _client
-    if _client is None:
-        credential = DefaultAzureCredential()
-        _client = DataFactoryManagementClient(credential, SUBSCRIPTION_ID)
     return _client
 
 
@@ -54,6 +64,7 @@ mcp = FastMCP(
         "Returns a list of pipeline names and their descriptions."
     ),
 )
+@with_auth
 def list_pipelines() -> list[dict[str, Any]]:
     """Return summary info for every pipeline in the factory."""
     client = _get_client()
@@ -78,6 +89,7 @@ def list_pipelines() -> list[dict[str, Any]]:
         "including all activities, parameters, and variables."
     ),
 )
+@with_auth
 def get_pipeline(pipeline_name: str) -> dict[str, Any]:
     """
     Retrieve the complete definition of a single pipeline.
@@ -132,6 +144,7 @@ def get_pipeline(pipeline_name: str) -> dict[str, Any]:
         "Returns the name, type, and description of each data flow."
     ),
 )
+@with_auth
 def list_data_flows() -> list[dict[str, Any]]:
     """Return summary info for every data flow in the factory."""
     client = _get_client()
@@ -157,6 +170,7 @@ def list_data_flows() -> list[dict[str, Any]]:
         "including sources, sinks, and transformation scripts."
     ),
 )
+@with_auth
 def get_data_flow(data_flow_name: str) -> dict[str, Any]:
     """
     Retrieve the complete definition of a single data flow.
@@ -210,6 +224,7 @@ def get_data_flow(data_flow_name: str) -> dict[str, Any]:
         "Returns each linked service's name, type, and description."
     ),
 )
+@with_auth
 def list_linked_services() -> list[dict[str, Any]]:
     """Return summary info for every linked service in the factory."""
     client = _get_client()

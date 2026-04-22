@@ -9,6 +9,8 @@ from .easyauth import parse_easyauth_headers
 from .context import current_user, set_current_user, reset_current_user
 from .cache import TokenCache, TokenRecord, default_cache
 from .contextual import ContextualCredential, with_auth
+from .config import AuthConfig, load_auth_config
+from .middleware import inject_auth_for_mcp
 from .providers import (
     AuthRequired,
     AzureServiceProvider,
@@ -35,6 +37,10 @@ __all__ = [
     # contextual credential
     "ContextualCredential",
     "with_auth",
+    # config + middleware
+    "AuthConfig",
+    "load_auth_config",
+    "inject_auth_for_mcp",
     # providers
     "AuthRequired",
     "Provider",

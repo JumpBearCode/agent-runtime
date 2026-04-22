@@ -36,7 +36,7 @@ from typing import AsyncGenerator, Optional
 from langsmith import traceable
 from langsmith.run_helpers import get_current_run_tree
 
-from auth import UserIdentity, set_current_user, reset_current_user
+from auth import UserIdentity, build_providers, set_current_user, reset_current_user
 
 from .core import config
 from .core.hooks import AbortRound, HookManager, HookResult, PreToolHook, _preview, validate_hitl
@@ -277,6 +277,13 @@ class AgentEngine:
 
         self._hitl_tools = validate_hitl(config.resolve_hitl())
         config.CONFIRM = bool(self._hitl_tools)
+
+        # Auth wiring — build providers from auth.json, expose config to
+        # tools.py via module-level binding so the tool middleware can
+        # look up mcp_bindings per dispatch.
+        self._auth_config = config.resolve_auth_config()
+        build_providers(self._auth_config.providers)
+        tools_mod.AUTH_CONFIG = self._auth_config
 
         self.system = build_system_prompt(self.skill_loader, mcp_manager=self.mcp)
 

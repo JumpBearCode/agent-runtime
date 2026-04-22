@@ -16,6 +16,7 @@ WORKDIR /build
 # Install dependencies into a venv that we'll copy into the runtime image.
 COPY pyproject.toml uv.lock ./
 COPY agent_runtime ./agent_runtime
+COPY auth ./auth
 RUN uv sync --frozen --no-dev --no-install-workspace \
     && uv pip install --python /build/.venv/bin/python --no-deps .
 
@@ -32,6 +33,7 @@ WORKDIR /app
 # Bring the built venv + the runtime package over.
 COPY --from=builder /build/.venv /app/.venv
 COPY --from=builder /build/agent_runtime /app/agent_runtime
+COPY --from=builder /build/auth /app/auth
 
 ENV PATH="/app/.venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
