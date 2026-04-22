@@ -36,6 +36,8 @@ from typing import AsyncGenerator, Optional
 from langsmith import traceable
 from langsmith.run_helpers import get_current_run_tree
 
+from auth import UserIdentity, set_current_user, reset_current_user
+
 from .core import config
 from .core.hooks import AbortRound, HookManager, HookResult, PreToolHook, _preview, validate_hitl
 from .core.loop import agent_loop, build_system_prompt
@@ -319,6 +321,7 @@ class AgentEngine:
         messages: list,
         trace_id: Optional[str] = None,
         conversation_id: Optional[str] = None,
+        user: Optional[UserIdentity] = None,
     ) -> AsyncGenerator[EngineEvent, None]:
         """Run one agent round over the supplied message history.
 
@@ -334,6 +337,10 @@ class AgentEngine:
                       multiple rounds of the same chat thread. Forwarded to
                       LangSmith as session_id metadata so the Threads view
                       groups all rounds of this conversation together.
+            user:     the UserIdentity produced by the require_user dependency.
+                      Re-bound to the auth ContextVar inside the worker thread
+                      so downstream tools see it; ContextVar does not cross the
+                      ThreadPoolExecutor boundary automatically.
         """
         if trace_id is None:
             trace_id = uuid.uuid4().hex
@@ -371,11 +378,16 @@ class AgentEngine:
                 "trace_id":        trace_id,
                 "agent_name":      config.AGENT_NAME,
                 "model":           config.MODEL,
+                "user_id":         user.user_id if user else None,
             },
             "run_id": trace_id if _is_uuid(trace_id) else None,
         }
 
         def _run_sync():
+            # ContextVar does not cross ThreadPoolExecutor.submit — re-bind
+            # the UserIdentity on this thread so downstream auth-aware tools
+            # see it via auth.current_user().
+            user_token = set_current_user(user) if user is not None else None
             tools_mod.set_thread_hooks(hooks)
             tools_mod.set_thread_todo(todo)
             try:
@@ -389,6 +401,8 @@ class AgentEngine:
             finally:
                 tools_mod.set_thread_hooks(None)
                 tools_mod.set_thread_todo(None)
+                if user_token is not None:
+                    reset_current_user(user_token)
                 loop.call_soon_threadsafe(queue.put_nowait, None)
 
         future = loop.run_in_executor(self._executor, _run_sync)

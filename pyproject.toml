@@ -10,6 +10,7 @@ dependencies = [
     "mcp>=1.26.0",
     "python-dotenv>=1.0.0",
     "langsmith>=0.2.0",
+    "pyjwt[crypto]>=2.8.0",
 ]
 
 [project.optional-dependencies]
@@ -45,7 +46,7 @@ build-backend = "hatchling.build"
 # Both packages ship in the same wheel — they're sibling Python packages at
 # the repo root, not a workspace with separate members.
 [tool.hatch.build.targets.wheel]
-packages = ["agent_runtime", "agent_frontend"]
+packages = ["agent_runtime", "agent_frontend", "auth"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

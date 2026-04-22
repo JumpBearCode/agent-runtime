@@ -6,14 +6,18 @@ runtime never persists; it computes one round and returns events.
 
 import json
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sse_starlette.sse import EventSourceResponse
+
+from auth import UserIdentity
+
+from ..deps import require_user
 
 router = APIRouter(prefix="/api", tags=["chat"])
 
 
 @router.post("/chat")
-async def chat(request: Request):
+async def chat(request: Request, user: UserIdentity = Depends(require_user)):
     """Run one agent round.
 
     Request body:
@@ -40,6 +44,7 @@ async def chat(request: Request):
     async def event_stream():
         async for event in engine.chat_stream(
             messages, trace_id=trace_id, conversation_id=conversation_id,
+            user=user,
         ):
             yield {
                 "event": event.type,

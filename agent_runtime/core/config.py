@@ -90,6 +90,24 @@ THINKING_BUDGET = int(os.getenv("AGENT_THINKING_BUDGET", "10000"))
 # Set to True by engine after wiring the confirm hook.
 CONFIRM = False
 
+# ── auth ──────────────────────────────────────────────────────────────────
+# JWT validation is performed on every /api/chat and /api/confirm request.
+# AUTH_DEV_MODE=1 bypasses validation and synthesizes a dev identity — for
+# local development only; must not be enabled in any shared environment.
+AUTH_DEV_MODE   = os.getenv("AUTH_DEV_MODE", "").lower() in ("1", "true", "yes")
+AAD_TENANT_ID   = os.getenv("AAD_TENANT_ID", "")
+AAD_AUDIENCE    = os.getenv("AAD_AUDIENCE", "")
+# v1 uses a single scope shared across all runtimes. Multi-scope authZ is
+# a future upgrade; see doc/auth-v1-status.md §3.
+AAD_REQUIRED_SCOPE = os.getenv("AAD_REQUIRED_SCOPE", "") or None
+
+if not AUTH_DEV_MODE:
+    if not AAD_TENANT_ID or not AAD_AUDIENCE:
+        logger.warning(
+            "AUTH_DEV_MODE is off but AAD_TENANT_ID/AAD_AUDIENCE are unset — "
+            "/api/chat will reject every request until these are configured."
+        )
+
 
 # ---------------------------------------------------------------------------
 # Settings resolution — single layer (the configured SETTINGS_DIR).

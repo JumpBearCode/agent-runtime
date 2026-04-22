@@ -23,9 +23,11 @@ from pathlib import Path
 from typing import Any, AsyncIterator, Dict, List
 
 import httpx
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+
+from auth import UserIdentity, parse_easyauth_headers
 
 from .storage import ChatHistoryBackend, close_backend, get_backend
 
@@ -41,13 +43,26 @@ _AGENT_RUNTIMES: List[str] = [
     u.strip() for u in os.getenv("AGENT_RUNTIMES", "http://localhost:8001").split(",") if u.strip()
 ]
 
-# "Default user" for single-tenant local deployment. When you wire auth
-# later, derive this from the request (e.g. Azure Entra ID claim).
-_DEFAULT_USER_ID = os.getenv("CHAT_USER_ID", "local")
-
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+# ── Auth dependency ───────────────────────────────────────────────────────
+# EasyAuth sits in front of this app and injects X-MS-CLIENT-PRINCIPAL-*
+# plus X-MS-TOKEN-AAD-ID-TOKEN on every authenticated request. The
+# dependency extracts a UserIdentity; downstream routes use user.user_id
+# for session ownership and forward user.raw_token as Bearer to the
+# runtime (which does the actual JWT signature check).
+#
+# AUTH_DEV_MODE=1 bypasses header parsing and synthesizes a dev user.
+
+
+async def require_user(request: Request) -> UserIdentity:
+    user = parse_easyauth_headers(request.headers)
+    if user is None:
+        raise HTTPException(status_code=401, detail="unauthenticated")
+    return user
 
 
 # ── Lifespan ──────────────────────────────────────────────────────────────
@@ -113,12 +128,12 @@ def _storage(request: Request) -> ChatHistoryBackend:
 
 
 @app.get("/api/sessions")
-async def list_sessions(request: Request):
-    return await _storage(request).list_sessions(user_id=_DEFAULT_USER_ID)
+async def list_sessions(request: Request, user: UserIdentity = Depends(require_user)):
+    return await _storage(request).list_sessions(user_id=user.user_id)
 
 
 @app.post("/api/sessions")
-async def create_session(request: Request):
+async def create_session(request: Request, user: UserIdentity = Depends(require_user)):
     """Create a new empty session bound to the given agent.
 
     Body: {"agent_url"?: str, "agent_name"?: str}. Missing fields fall back
@@ -139,20 +154,24 @@ async def create_session(request: Request):
         "created_at": now,
         "updated_at": now,
     }
-    await _storage(request).save_session(session, user_id=_DEFAULT_USER_ID)
+    await _storage(request).save_session(session, user_id=user.user_id)
     return session
 
 
 @app.get("/api/sessions/{session_id}")
-async def get_session(session_id: str, request: Request):
-    s = await _storage(request).get_session(session_id, user_id=_DEFAULT_USER_ID)
+async def get_session(
+    session_id: str, request: Request, user: UserIdentity = Depends(require_user)
+):
+    s = await _storage(request).get_session(session_id, user_id=user.user_id)
     if s is None:
         raise HTTPException(404, "session not found")
     return s
 
 
 @app.put("/api/sessions/{session_id}")
-async def put_session(session_id: str, request: Request):
+async def put_session(
+    session_id: str, request: Request, user: UserIdentity = Depends(require_user)
+):
     """Upsert a full session. Body is the session dict; id in path wins."""
     body = await request.json()
     body["id"] = session_id
@@ -161,13 +180,15 @@ async def put_session(session_id: str, request: Request):
     body.setdefault("messages", [])
     if "agent_url" not in body or "agent_name" not in body:
         raise HTTPException(400, "agent_url and agent_name are required")
-    await _storage(request).save_session(body, user_id=_DEFAULT_USER_ID)
+    await _storage(request).save_session(body, user_id=user.user_id)
     return body
 
 
 @app.delete("/api/sessions/{session_id}")
-async def delete_session(session_id: str, request: Request):
-    await _storage(request).delete_session(session_id, user_id=_DEFAULT_USER_ID)
+async def delete_session(
+    session_id: str, request: Request, user: UserIdentity = Depends(require_user)
+):
+    await _storage(request).delete_session(session_id, user_id=user.user_id)
     return {"status": "deleted"}
 
 
@@ -202,7 +223,9 @@ def _strip_ui_fields(messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 
 @app.post("/api/sessions/{session_id}/chat")
-async def chat(session_id: str, request: Request):
+async def chat(
+    session_id: str, request: Request, user: UserIdentity = Depends(require_user)
+):
     """Proxy POST to `{session.agent_url}/api/chat`, streaming the SSE back.
 
     Request body: {"messages": [...full history, ending in the new user
@@ -210,7 +233,7 @@ async def chat(session_id: str, request: Request):
     PUTs the completed session back to /api/sessions/{id} when the stream
     ends.
     """
-    session = await _storage(request).get_session(session_id, user_id=_DEFAULT_USER_ID)
+    session = await _storage(request).get_session(session_id, user_id=user.user_id)
     if session is None:
         raise HTTPException(404, "session not found")
     body = await request.json()
@@ -222,6 +245,14 @@ async def chat(session_id: str, request: Request):
     http: httpx.AsyncClient = request.app.state.http
     target = f"{session['agent_url']}/api/chat"
 
+    # Forward the user's ID token as Bearer so the runtime can validate
+    # and extract an authoritative UserIdentity. Frontend-derived identity
+    # is trusted here (behind EasyAuth) but runtime re-validates for
+    # defense in depth + for the "direct service caller" path.
+    forward_headers = {"Accept": "text/event-stream"}
+    if user.raw_token:
+        forward_headers["Authorization"] = f"Bearer {user.raw_token}"
+
     async def upstream() -> AsyncIterator[bytes]:
         # httpx streaming context manager: forward every chunk as-is.
         async with http.stream(
@@ -232,7 +263,7 @@ async def chat(session_id: str, request: Request):
                 "trace_id": trace_id,
                 "conversation_id": session_id,
             },
-            headers={"Accept": "text/event-stream"},
+            headers=forward_headers,
         ) as r:
             if r.status_code != 200:
                 err = (await r.aread()).decode("utf-8", errors="replace")
@@ -252,17 +283,26 @@ async def chat(session_id: str, request: Request):
 
 
 @app.post("/api/sessions/{session_id}/confirm/{request_id}")
-async def confirm(session_id: str, request_id: str, request: Request):
+async def confirm(
+    session_id: str,
+    request_id: str,
+    request: Request,
+    user: UserIdentity = Depends(require_user),
+):
     """Forward HITL allow/deny to the session's runtime."""
-    session = await _storage(request).get_session(session_id, user_id=_DEFAULT_USER_ID)
+    session = await _storage(request).get_session(session_id, user_id=user.user_id)
     if session is None:
         raise HTTPException(404, "session not found")
     body = await request.json()
     http: httpx.AsyncClient = request.app.state.http
+    forward_headers = {}
+    if user.raw_token:
+        forward_headers["Authorization"] = f"Bearer {user.raw_token}"
     try:
         resp = await http.post(
             f"{session['agent_url']}/api/confirm/{request_id}",
             json={"allowed": bool(body.get("allowed", False))},
+            headers=forward_headers,
             timeout=10.0,
         )
     except httpx.HTTPError as e:
