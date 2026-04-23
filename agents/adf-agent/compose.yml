@@ -1,0 +1,29 @@
+# ADF agent — Compose fragment.
+#
+# Merged into the root docker-compose.yml by local.sh via COMPOSE_FILE.
+# When multiple compose files are merged, ALL relative paths in this
+# file (build.context, env_file, volumes, …) are resolved against the
+# PROJECT DIRECTORY — which, because local.sh always invokes docker
+# compose from the repo root, is the repo root.
+
+services:
+  adf-agent:
+    build:
+      context: .
+      dockerfile: agents/adf-agent/Dockerfile
+    image: agent-runtime-adf:0.1
+    container_name: agent-adf
+    env_file:
+      - .env
+    environment:
+      AGENT_NAME: adf
+    ports:
+      # Host 8001 → container 8000. Every agent exposes its own host
+      # port so you can `curl localhost:8001/api/info` for debugging
+      # without going through the frontend.
+      - "8001:8000"
+    volumes:
+      - ./agents/adf-agent/workspace:/workspace
+    networks:
+      - agent-net
+    restart: unless-stopped

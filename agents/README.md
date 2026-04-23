@@ -62,12 +62,24 @@ The container exposes:
 
 ## Adding a new agent
 
+The repo-root `./local.sh` auto-discovers any agent with a `compose.yml`
+fragment, so adding one is drop-in — no edits to root compose, no edits
+to the script.
+
 1. Create `agents/<name>/` with `skills/`, `settings/`, `prompts/`, optionally `mcp/`.
 2. Create `agents/<name>/workspace/.gitkeep` to reserve the mount point
-   (the `agents/*/workspace/*` pattern in `.gitignore` keeps AI-written
-   files out of git).
+   (`.gitignore` already excludes workspace contents).
 3. Write `agents/<name>/Dockerfile` extending `agent-runtime-base`.
-4. Build and run on a different host port with
-   `-v "$(pwd)/agents/<name>/workspace:/workspace"`.
+4. Write `agents/<name>/compose.yml` — a single-service fragment.
+   Copy `agents/adf-agent/compose.yml` and change:
+   - service name (`adf-agent` → `<name>`)
+   - `container_name`
+   - `image` tag
+   - build `dockerfile` path
+   - `AGENT_NAME` env
+   - host port (`8001` → next free: `8002`, `8003`, ...)
+   - workspace mount path
+5. Run `./local.sh up` from the repo root.
 
-The frontend selects an agent by pointing at the right container's URL.
+The frontend receives `AGENT_RUNTIMES=http://<each-name>:8000,...` at
+launch and lets the user pick between them.

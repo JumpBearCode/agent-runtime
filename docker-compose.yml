@@ -1,0 +1,38 @@
+# Root compose: frontend + shared network.
+#
+# Agent services are NOT declared here — each agent ships its own
+# agents/<name>/compose.yml fragment, which local.sh auto-discovers and
+# merges in via COMPOSE_FILE.
+#
+# You normally drive this through ./local.sh (which handles base-image
+# build ordering and populates AGENT_RUNTIMES). Running `docker compose
+# up` directly without local.sh will leave the frontend with no agents
+# to talk to and skip the base image build.
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: agent_frontend/Dockerfile
+    image: agent-frontend:0.1
+    container_name: agent-frontend
+    env_file: .env
+    environment:
+      # local.sh computes this from the list of discovered agent fragments
+      # and exports it into the compose environment. Frontend reaches each
+      # agent via its compose service name on the internal network.
+      AGENT_RUNTIMES: ${AGENT_RUNTIMES:-}
+      CHAT_STORAGE: local
+      CHAT_SQLITE_PATH: /app/data/chat.db
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./.data:/app/data
+    networks:
+      - agent-net
+    restart: unless-stopped
+
+networks:
+  agent-net:
+    driver: bridge
+    name: agent-runtime-net

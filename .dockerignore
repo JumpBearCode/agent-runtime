@@ -2,6 +2,8 @@
 .git
 .gitignore
 .env
+.env.*
+!.env.example
 .sessions
 .transcripts
 .agent_settings
@@ -11,8 +13,16 @@ __pycache__
 *.pyo
 .pytest_cache
 
-# Frontend placeholder — base image doesn't need it.
-agent_frontend
+# Local persistence — mounted as volumes, not baked in.
+.data
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Per-agent workspaces are mounted at runtime, not baked.
+agents/*/workspace/*
+!agents/*/workspace/.gitkeep
 
 # Docs and assets.
 doc
@@ -23,3 +33,8 @@ prompt
 
 # Tests.
 tests
+
+# Compose / orchestration files never belong inside an image.
+docker-compose*.yml
+local.sh
+infra

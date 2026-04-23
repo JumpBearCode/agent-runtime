@@ -16,21 +16,35 @@ stateless. Storage backend is swappable via one env var.
 
 ## Run
 
-**1. Start an agent-runtime container** (see the repo-root README):
+### The easy way: Docker Compose via `./local.sh`
+
+From the repo root:
 
 ```bash
-docker run --rm -d --name adf-agent -p 8001:8000 \
-    --env-file .env agent-runtime-adf:0.1
+./local.sh up            # build base, start frontend + every agent in agents/
+./local.sh up -d         # same, detached
+./local.sh down          # stop everything
 ```
+
+`local.sh` auto-discovers agents, builds the shared base image, launches
+the frontend on `:8080`, and exposes each agent on its own host port
+(`adf-agent` on `:8001`, etc.). SQLite chat history lives at
+`./.data/chat.db` on the host (bind-mounted into the container at
+`/app/data/chat.db`).
+
+### Running the web UI directly (no Docker) — for frontend development
+
+When you're iterating on this frontend (HTML/JS/Python), skip the Docker
+rebuild loop and run it on the host. Keep the agents dockerized via
+`./local.sh up -d`, then:
+
+**1. Start an agent-runtime** (typically via `./local.sh up -d`, listening on `:8001`).
 
 **2. Install frontend deps** (from repo root):
 
 ```bash
-# default: local SQLite, zero config
-uv sync --extra frontend
-
-# with Postgres backend
-uv sync --extra frontend --extra frontend-postgres
+uv sync --extra frontend                            # SQLite backend
+uv sync --extra frontend --extra frontend-postgres  # Postgres backend
 ```
 
 **3. Run the web UI** (from repo root so `.env` is picked up):
@@ -54,7 +68,7 @@ keep one `.env` at repo root shared with the runtime.
 |---|---|---|
 | `AGENT_RUNTIMES` | `http://localhost:8001` | Comma-sep list of runtime base URLs (populates the picker) |
 | `CHAT_STORAGE` | `local` | `local` (SQLite) or `postgres` |
-| `CHAT_SQLITE_PATH` | `./agent_frontend.db` | SQLite file path |
+| `CHAT_SQLITE_PATH` | `./agent_frontend.db` (local) / `/app/data/chat.db` (Docker) | SQLite file path |
 | `CHAT_POSTGRES_URL` | — | `postgresql://user:pass@host:5432/db` (required when `CHAT_STORAGE=postgres`) |
 | `CHAT_USER_ID` | `local` | Tenant partition key (single-user for now) |
 | `LOG_LEVEL` | `INFO` | |

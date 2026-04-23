@@ -15,7 +15,6 @@ from typing import Optional
 
 from .base import ChatHistoryBackend
 from .local import SQLiteBackend
-from .postgres import PostgresBackend
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +31,10 @@ async def create_backend() -> ChatHistoryBackend:
         return backend
 
     if mode == "postgres":
+        # Lazy import: asyncpg ships in the optional [frontend-postgres] extra.
+        # Only require it when someone actually asks for the postgres backend.
+        from .postgres import PostgresBackend
+
         conn = os.environ.get("CHAT_POSTGRES_URL")
         if not conn:
             raise RuntimeError(
