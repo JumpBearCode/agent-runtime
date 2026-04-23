@@ -39,8 +39,6 @@ def _format_args(tool_name: str, args: dict) -> str:
 _DEFAULT_PROMPT_TEMPLATE = """You are a coding agent at {workdir}.
 Use todo_write to plan multi-step work and track progress. Update the todo list as you complete steps.
 Use load_skill to access specialized knowledge before tackling unfamiliar topics.
-
-All file operations (read_file, write_file, edit_file) are restricted to the workspace directory.
 Prefer tools over prose."""
 
 
@@ -74,7 +72,15 @@ Do NOT run MCP tools via bash. They are tool_use functions, not shell commands.
 ALWAYS prefer MCP tools over bash/curl for interacting with external services.
 Available MCP tools: {mcp_tools_list}"""
 
-    return f"{base}{mcp_section}\n\nSkills available:\n{skills}"
+    workspace_section = f"""
+
+Your workspace is `{workdir}` — this IS your project root, not a parent directory for projects.
+- For a new project, initialize IN PLACE: `uv init .`, `npm init -y`, `cargo init` (no name argument).
+- Create subdirectories only for intra-project organization (src/, tests/, docs/).
+- Do NOT `mkdir my-project && cd my-project` — you are already in the project.
+- All file tools (read_file, write_file, edit_file) are restricted to this directory; paths that escape it are rejected."""
+
+    return f"{base}{mcp_section}{workspace_section}\n\nSkills available:\n{skills}"
 
 
 def _stream_response(system: str, messages: list, on_event=None):

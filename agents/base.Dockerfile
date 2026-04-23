@@ -25,7 +25,9 @@ FROM python:3.12-slim AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
-    && useradd -m -s /bin/bash agent
+    && useradd -m -s /bin/bash agent \
+    && mkdir -p /workspace \
+    && chown agent:agent /workspace
 
 WORKDIR /app
 
@@ -33,13 +35,18 @@ WORKDIR /app
 COPY --from=builder /build/.venv /app/.venv
 COPY --from=builder /build/agent_runtime /app/agent_runtime
 
+# Split of concerns:
+#   /app       — immutable: runtime code, venv, baked-in skills/settings/prompts/mcp
+#   /workspace — mutable: the AI's working directory (mount a host dir here)
 ENV PATH="/app/.venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
     AGENT_NAME="" \
-    AGENT_WORKDIR=/app \
+    AGENT_WORKDIR=/workspace \
     AGENT_SETTINGS_DIR=/app/settings \
     AGENT_SKILLS_DIR=/app/skills \
     AGENT_SYSTEM_PROMPT_FILE=/app/prompts/system.md
+
+VOLUME ["/workspace"]
 
 # Per-agent images add: COPY skills/ settings/ prompts/ mcp/ → /app/...
 

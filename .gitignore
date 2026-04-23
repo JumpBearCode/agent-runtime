@@ -17,3 +17,8 @@ agent_frontend.db
 *.db-journal
 *.db-wal
 *.db-shm
+
+# Per-agent workspaces — volume-mounted into containers; contents are
+# whatever the AI writes at runtime, not source.
+agents/*/workspace/*
+!agents/*/workspace/.gitkeep

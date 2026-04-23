@@ -27,8 +27,24 @@ docker build -f agents/adf-agent/Dockerfile -t agent-runtime-adf:0.1 .
 docker run --rm -p 8001:8000 \
     -e MODEL_ID=claude-sonnet-4-6 \
     -e ANTHROPIC_API_KEY=... \
+    -v "$(pwd)/agents/adf-agent/workspace:/workspace" \
     agent-runtime-adf:0.1
 ```
+
+### Container layout
+
+The image splits concerns between two top-level directories:
+
+- `/app` — baked at build time, immutable at runtime. Holds the runtime
+  code, its venv, and the agent's `skills/`, `settings/`, `prompts/`,
+  `mcp/`.
+- `/workspace` — mutable working directory for the agent. Mount a host
+  directory here (e.g. `agents/<name>/workspace/`) so anything the agent
+  writes — scratch files, new Python projects, generated artifacts — is
+  visible locally and persists across container restarts.
+
+All file tools (`read_file`, `write_file`, `edit_file`) and `bash` run with
+`cwd=/workspace` and reject paths that escape it.
 
 The container exposes:
 
@@ -47,7 +63,11 @@ The container exposes:
 ## Adding a new agent
 
 1. Create `agents/<name>/` with `skills/`, `settings/`, `prompts/`, optionally `mcp/`.
-2. Write `agents/<name>/Dockerfile` extending `agent-runtime-base`.
-3. Build and run on a different host port.
+2. Create `agents/<name>/workspace/.gitkeep` to reserve the mount point
+   (the `agents/*/workspace/*` pattern in `.gitignore` keeps AI-written
+   files out of git).
+3. Write `agents/<name>/Dockerfile` extending `agent-runtime-base`.
+4. Build and run on a different host port with
+   `-v "$(pwd)/agents/<name>/workspace:/workspace"`.
 
 The frontend selects an agent by pointing at the right container's URL.

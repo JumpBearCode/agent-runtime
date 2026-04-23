@@ -11,11 +11,16 @@
 #       -e ADF_SUBSCRIPTION_ID=... \
 #       -e ADF_RESOURCE_GROUP=... \
 #       -e ADF_FACTORY_NAME=... \
+#       -v "$(pwd)/agents/adf-agent/workspace:/workspace" \
 #       agent-runtime-adf:0.1
 #
 # Run (recommended — pipes the whole repo-root .env into the container so
-# LangSmith, Anthropic, ADF, and everything else stays in sync):
-#   docker run --rm -p 8001:8000 --env-file .env agent-runtime-adf:0.1
+# LangSmith, Anthropic, ADF, and everything else stays in sync, and mounts
+# the host workspace so anything the agent writes shows up locally):
+#   docker run --rm -p 8001:8000 \
+#       --env-file .env \
+#       -v "$(pwd)/agents/adf-agent/workspace:/workspace" \
+#       agent-runtime-adf:0.1
 #
 # To enable LangSmith tracing, add these to .env (or pass via -e):
 #       LANGSMITH_TRACING=true
