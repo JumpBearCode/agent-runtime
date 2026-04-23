@@ -6,7 +6,7 @@
 # Per-agent images extend this and COPY in their own skills/, settings/,
 # prompts/, and (optional) mcp/ directories.
 
-FROM python:3.12-slim AS builder
+FROM python:3.12-slim-bookworm AS builder
 
 # uv (fast Python package manager) for the build stage.
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
@@ -20,14 +20,26 @@ RUN uv sync --frozen --no-dev --no-install-workspace \
     && uv pip install --python /build/.venv/bin/python --no-deps .
 
 
-FROM python:3.12-slim AS runtime
+FROM python:3.12-slim-bookworm AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        curl ca-certificates \
-    && rm -rf /var/lib/apt/lists/* \
+        curl ca-certificates gnupg \
     && useradd -m -s /bin/bash agent \
     && mkdir -p /workspace \
-    && chown agent:agent /workspace
+    && chown agent:agent /workspace \
+    # Azure CLI — baked into base because ~90% of agents here are Azure-family
+    # (ADF, Fabric, Synapse, …). `DefaultAzureCredential` falls back to
+    # `AzureCliCredential` when no Managed Identity is present, which is how
+    # local dev auth works (bind-mount host's ~/.azure into the container).
+    # In cloud, MI kicks in earlier in the chain and az CLI is never invoked —
+    # pure dev overhead (~500MB), zero production impact.
+    && curl -sLS https://packages.microsoft.com/keys/microsoft.asc \
+        | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli/ $(grep VERSION_CODENAME /etc/os-release | cut -d= -f2) main" \
+        > /etc/apt/sources.list.d/azure-cli.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends azure-cli \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

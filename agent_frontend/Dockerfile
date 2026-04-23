@@ -10,7 +10,7 @@
 #   /app               — baked: runtime + frontend code, venv, etc.
 #   /app/data          — mutable: SQLite chat history (mount a host dir here)
 
-FROM python:3.12-slim AS builder
+FROM python:3.12-slim-bookworm AS builder
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
@@ -28,7 +28,7 @@ RUN uv sync --frozen --no-dev --extra frontend --no-install-workspace \
     && uv pip install --python /app/.venv/bin/python --no-deps .
 
 
-FROM python:3.12-slim AS runtime
+FROM python:3.12-slim-bookworm AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl ca-certificates \

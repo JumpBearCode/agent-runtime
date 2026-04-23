@@ -24,6 +24,15 @@ services:
       - "8001:8000"
     volumes:
       - ./agents/adf-agent/workspace:/workspace
+      # Local-dev Azure auth: bind host's ~/.azure into the container so
+      # AzureCliCredential (inside DefaultAzureCredential) can reuse the
+      # user's existing `az login` session. Read-write because `az` needs
+      # to create extensionIndex.json / telemetry / refreshed tokens at
+      # startup — read-only makes it crash before it can do anything
+      # useful. Container writes under the same user identity, so the
+      # blast radius on host state is negligible. In cloud, Managed
+      # Identity replaces this entirely and the mount is not used.
+      - ${HOME}/.azure:/home/agent/.azure
     networks:
       - agent-net
     restart: unless-stopped

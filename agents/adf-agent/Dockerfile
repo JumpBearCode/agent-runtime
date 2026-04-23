@@ -47,6 +47,10 @@ COPY --chown=agent:agent agents/adf-agent/settings /app/settings
 COPY --chown=agent:agent agents/adf-agent/prompts  /app/prompts
 COPY --chown=agent:agent agents/adf-agent/mcp      /app/mcp
 
+# Azure CLI is pre-installed in the base image — no per-agent work needed.
+# Local dev picks up host credentials via the bind-mounted ~/.azure in
+# agents/adf-agent/compose.yml; cloud uses Managed Identity.
+
 ENV AGENT_NAME=adf
 
 USER agent

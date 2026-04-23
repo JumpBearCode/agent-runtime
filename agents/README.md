@@ -46,6 +46,30 @@ The image splits concerns between two top-level directories:
 All file tools (`read_file`, `write_file`, `edit_file`) and `bash` run with
 `cwd=/workspace` and reject paths that escape it.
 
+### Authenticating to downstream services
+
+Most agents here talk to Azure (ADF, Fabric, Synapse, …), which use
+`DefaultAzureCredential` — it walks a chain until something works:
+
+1. Environment variables (`AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` / …)
+2. Workload Identity / Managed Identity (cloud deploy)
+3. **Azure CLI** — reads `~/.azure/` for a cached `az login` session
+
+The base image installs `az` so step 3 works out of the box. Each Azure
+agent then bind-mounts the host's `~/.azure` into the container at
+`/home/agent/.azure`, so the container picks up your existing login:
+
+```yaml
+# in agents/<name>/compose.yml
+volumes:
+  - ${HOME}/.azure:/home/agent/.azure
+```
+
+Cloud deploy uses Managed Identity (step 2), skipping the mount — same
+Dockerfile works in both environments. Non-Azure agents (Snowflake, ADO)
+don't use this path and will ship their own auth provider once the
+`auth/` package from `doc/auth-flow.md` is implemented.
+
 The container exposes:
 
 - `GET  /api/healthz`
@@ -79,6 +103,8 @@ to the script.
    - `AGENT_NAME` env
    - host port (`8001` → next free: `8002`, `8003`, ...)
    - workspace mount path
+   - Keep the `${HOME}/.azure` mount if the agent talks to Azure;
+     drop it and add an auth-provider mount when the target isn't Azure.
 5. Run `./local.sh up` from the repo root.
 
 The frontend receives `AGENT_RUNTIMES=http://<each-name>:8000,...` at
